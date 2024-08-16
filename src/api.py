@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from controller import main
+from controller import main as rag_main
 
 app = Flask(__name__)
 
@@ -11,9 +11,9 @@ def generate():
     if not query:
         return jsonify({"error": "Query not provided"}), 400
     
-    response = main(query)
+    response = rag_main(query)
     
     return jsonify({"response": response})
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000)  # This line is typically bypassed when using gunicorn
