@@ -10,7 +10,7 @@ ___
 ## Directory Structure
 
 ```
-MortyRAG/
+MortyRAG-main/
 │
 ├── README.md                 # Project overview and instructions
 ├── LICENSE                   # BSD 3-Clause License for the project
@@ -51,7 +51,7 @@ To get started, clone the repository and install the necessary dependencies:
 
 ```bash
 git clone https://github.com/HermiTech-LLC/MortyRAG.git
-cd MortyRAG
+cd MortyRAG-main
 pip install -r requirements.txt
 ```
 
