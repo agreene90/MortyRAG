@@ -29,6 +29,7 @@ MortyRAG-main/
 │   └── files/
 │       ├── documentation/
 │       ├── resources/
+│       │   └── project_files.db  # Database created by create_file_database.py
 │       └── logs/
 ├── docs/
 │   ├── api.md
@@ -41,6 +42,7 @@ MortyRAG-main/
 ├── src/
 │   ├── api.py
 │   ├── controller.py
+│   ├── create_file_database.py
 │   ├── data_ingestion.py
 │   ├── generation.py
 │   ├── knowledge_base.py
@@ -52,7 +54,8 @@ MortyRAG-main/
 ├── Mortspeak.jpg
 ├── README.md
 ├── requirements.txt
-└── main.py
+├── main.py            # Entry point script for running the application
+└── Dockerfile         # Dockerfile for containerizing the application
 ```
 
 ## Installation
