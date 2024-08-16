@@ -23,9 +23,11 @@ jobs:
         rm -rf temp_unzip
 
     - name: Commit changes
+      env:
+        GITHUB_TOKEN: ${{ secrets.ACTIONS_DEPLOY_KEY }}
       run: |
-        git config --local user.email "actions@github.com"
-        git config --local user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+        git config --global user.name "GitHub Actions"
         git add .
         git commit -m "Unzip and deploy project files"
-        git push origin main
+        git push
