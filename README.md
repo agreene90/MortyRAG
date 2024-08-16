@@ -48,8 +48,10 @@ MortyRAG-main/
 │   ├── knowledge_base.py
 │   └── retrieval.py
 ├── tests/
-│   ├── Placeholder
-│   └── test_module.py
+│   ├── test_module.py              # Enhanced unit tests for the controller
+│   ├── test_data_ingestion.py      # Unit tests for the data_ingestion module
+│   ├── test_knowledge_base.py      # Unit tests for the knowledge_base module
+│   └── test_generation.py          # Unit tests for the generation module
 ├── LICENSE
 ├── Mortspeak.jpg
 ├── README.md
