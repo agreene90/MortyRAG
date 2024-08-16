@@ -1,0 +1,11 @@
+numpy
+scikit-learn
+scipy
+pandas
+transformers
+torch
+flask
+joblib
+pickle-mixin
+gunicorn
+pytest
