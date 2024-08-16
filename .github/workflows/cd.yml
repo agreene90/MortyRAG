@@ -1,0 +1,20 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  unzip_and_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Unzip the project archive
+      run: unzip -o rag_llm_project_enhanced.zip -d .
+      
+    - name: List files for verification
+      run: ls -R
