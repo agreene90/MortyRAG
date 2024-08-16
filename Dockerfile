@@ -10,8 +10,19 @@ COPY . /app
 # Install any necessary dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Create a volume for persistent storage of the database
+VOLUME ["/app/data/files/resources/"]
+
+# Copy the entrypoint script and make it executable
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # Expose port 5000
 EXPOSE 5000
 
-# Command to run your application with Gunicorn
-CMD ["gunicorn", "--workers", "3", "--bind", "0.0.0.0:5000", "main:create_app"]
+# Health check to ensure the API is running
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:5000/ || exit 1
+
+# Set the entrypoint to the script
+ENTRYPOINT ["/entrypoint.sh"]
