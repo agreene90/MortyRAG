@@ -3,13 +3,14 @@
 ## Overview
 
 This project, developed by Ant under HermiTech-LLC, implements a Retrieval-Augmented Generation (RAG) model that combines a document retrieval mechanism with a generative language model. The system is designed to produce witty, informative, and contextually appropriate responses, with a particular focus on physics-related content.
+
 ___
 ![mortspeak](https://github.com/HermiTech-LLC/MortyRAG/blob/main/Mortspeak.jpg)
 ___
 
 ## Directory Structure
 
-```
+```plaintext
 MortyRAG-main/
 ├── data/
 │   ├── raw/
@@ -56,10 +57,11 @@ MortyRAG-main/
 ├── Mortspeak.jpg
 ├── README.md
 ├── requirements.txt
-├── main.py
+├── main.py            # Entry point script for running the application
 ├── Dockerfile         # Dockerfile for containerizing the application
 └── entrypoint.sh      # Entrypoint script for initializing the database and starting Gunicorn
 ```
+
 ## Installation
 
 To get started, clone the repository and install the necessary dependencies:
@@ -113,19 +115,26 @@ python src/create_file_database.py
 
 This script will scan the `data/files/` directory, extract file metadata and content, and store it in an SQLite database located in `data/files/resources/project_files.db`.
 
-### 3. Running the Application
+### 3. Running the Application with Gunicorn
 
-You can run the entire application using the `main.py` script. This script initializes the Flask API, integrates the text-to-speech functionality, and ensures everything is properly set up:
+For production environments, it is recommended to use Gunicorn as your WSGI server. The system is already configured for this using the provided Docker setup:
 
-```bash
-python main.py
-```
+#### **Using Docker:**
 
-The server will start on `http://0.0.0.0:5000/`. You can send POST requests to the `/generate` endpoint with a JSON payload containing the `query` parameter.
+1. **Build the Docker Image**:
+   ```bash
+   docker build -t your-rag-system .
+   ```
 
-### 4. Running the API with Gunicorn (Optional)
+2. **Run the Docker Container**:
+   ```bash
+   docker run -d -p 5000:5000 --name rag-system your-rag-system
+   ```
 
-For production environments, it is recommended to use Gunicorn as your WSGI server:
+   - The entrypoint script `entrypoint.sh` will handle database initialization and start the Gunicorn server.
+   - The server will start on `http://0.0.0.0:5000/`. You can send POST requests to the `/generate` endpoint with a JSON payload containing the `query` parameter.
+
+#### **Without Docker (Manual Setup):**
 
 ```bash
 gunicorn --workers 3 --bind 0.0.0.0:5000 main:create_app
@@ -150,11 +159,11 @@ gunicorn --workers 3 --bind 0.0.0.0:5000 main:create_app
 }
 ```
 
-### 5. Text-to-Speech Functionality
+### 4. Text-to-Speech Functionality
 
 Your system includes text-to-speech conversion for the generated responses. The speech output will be handled by the `pyttsx3` library, which operates locally without the need for an internet connection.
 
-### 6. Testing
+### 5. Testing
 
 You can run the unit tests to ensure everything is working correctly:
 
