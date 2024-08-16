@@ -15,11 +15,17 @@ jobs:
 
     - name: Unzip the project archive
       run: unzip -o rag_llm_project_enhanced.zip -d temp_unzip
-      
+
     - name: Move files to the root directory
       run: |
         mv temp_unzip/* .
+        mv temp_unzip/.* . || true
         rm -rf temp_unzip
 
-    - name: List files for verification
-      run: ls -R
+    - name: Commit changes
+      run: |
+        git config --local user.email "actions@github.com"
+        git config --local user.name "GitHub Actions"
+        git add .
+        git commit -m "Unzip and deploy project files"
+        git push origin main
