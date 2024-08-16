@@ -7,7 +7,7 @@ This project, developed by Ant under HermiTech-LLC, implements a Retrieval-Augme
 ## Directory Structure
 
 ```
-rag_llm_project/
+MortyRAG/
 │
 ├── README.md                 # Project overview and instructions
 ├── LICENSE                   # BSD 3-Clause License for the project
