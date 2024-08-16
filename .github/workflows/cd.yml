@@ -8,29 +8,11 @@ on:
 jobs:
   unzip_and_deploy:
     runs-on: ubuntu-latest
-    environment: unzip  # Ensure the environment is set
+    environment: unzip  # Use the unzip environment
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
 
     - name: Unzip the project archive
-      run: unzip -o rag_llm_project_enhanced.zip -d temp_unzip
-
-    - name: Move files to the root directory
-      run: |
-        mv temp_unzip/* .
-        mv temp_unzip/.* . || true
-        rm -rf temp_unzip
-
-    - name: Set up Git credentials
-      run: |
-        git config --global user.email "actions@github.com"
-        git config --global user.name "GitHub Actions"
-        git remote set-url origin https://x-access-token:${{ secrets.ACTIONS_DEPLOY_KEY }}@github.com/HermiTech-LLC/MortyRAG.git
-
-    - name: Commit changes
-      run: |
-        git add .
-        git commit -m "Unzip and deploy project files"
-        git push origin main
+      run: unzip -o rag_llm_project_enhanced.zip -d .
