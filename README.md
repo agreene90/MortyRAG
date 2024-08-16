@@ -4,7 +4,9 @@
 
 This project, developed by Ant under HermiTech-LLC, implements a Retrieval-Augmented Generation (RAG) model that combines a document retrieval mechanism with a generative language model. The system is designed to produce witty, informative, and contextually appropriate responses, with a particular focus on physics-related content.
 ___
-![mortspeak](
+![mortspeak](https://github.com/HermiTech-LLC/MortyRAG/blob/main/Mortspeak.jpg)
+___
+
 ## Directory Structure
 
 ```
