@@ -16,3 +16,14 @@ jobs:
 
     - name: Unzip the project archive
       run: unzip -o rag_llm_project_enhanced.zip -d .
+
+    - name: Commit and push changes
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git config --global user.email "actions@github.com"
+        git config --global user.name "GitHub Actions"
+        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/HermiTech-LLC/MortyRAG.git
+        git add .
+        git commit -m "Unzipped and updated files"
+        git push origin main
