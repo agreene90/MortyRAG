@@ -48,16 +48,17 @@ MortyRAG-main/
 │   ├── knowledge_base.py
 │   └── retrieval.py
 ├── tests/
-│   ├── test_module.py              # Enhanced unit tests for the controller
-│   ├── test_data_ingestion.py      # Unit tests for the data_ingestion module
-│   ├── test_knowledge_base.py      # Unit tests for the knowledge_base module
-│   └── test_generation.py          # Unit tests for the generation module
+│   ├── test_module.py
+│   ├── test_data_ingestion.py
+│   ├── test_knowledge_base.py
+│   └── test_generation.py
 ├── LICENSE
 ├── Mortspeak.jpg
 ├── README.md
 ├── requirements.txt
-├── main.py            # Entry point script for running the application
-└── Dockerfile         # Dockerfile for containerizing the application
+├── main.py
+├── Dockerfile         # Dockerfile for containerizing the application
+└── entrypoint.sh      # Entrypoint script for initializing the database and starting Gunicorn
 ```
 ## Installation
 
