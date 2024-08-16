@@ -14,7 +14,12 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Unzip the project archive
-      run: unzip -o rag_llm_project_enhanced.zip -d .
+      run: unzip -o rag_llm_project_enhanced.zip -d temp_unzip
       
+    - name: Move files to the root directory
+      run: |
+        mv temp_unzip/* .
+        rm -rf temp_unzip
+
     - name: List files for verification
       run: ls -R
