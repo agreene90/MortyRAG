@@ -1,4 +1,4 @@
-# RAG LLM Project
+# mortyRAG
 
 ## Overview
 
