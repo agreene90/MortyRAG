@@ -50,8 +50,8 @@ MortyRAG/
 To get started, clone the repository and install the necessary dependencies:
 
 ```bash
-git clone https://github.com/HermiTech-LLC/rag_llm_project.git
-cd rag_llm_project
+git clone https://github.com/HermiTech-LLC/MortyRAG.git
+cd MortyRAG
 pip install -r requirements.txt
 ```
 
