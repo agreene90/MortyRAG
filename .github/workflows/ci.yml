@@ -1,0 +1,51 @@
+
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+
+    - name: Cache pip
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Run unit tests
+      run: python -m unittest discover -s tests
+
+    - name: Build Docker image
+      run: docker build -t your-rag-system .
+
+    - name: Save Docker image to cache
+      uses: actions/cache@v2
+      with:
+        path: /home/runner/work/_temp/docker_cache
+        key: docker-${{ runner.os }}-${{ hashFiles('Dockerfile') }}
+        restore-keys: |
+          docker-${{ runner.os }}
+
+    - name: Test Docker image
+      run: docker run --rm your-rag-system python -m unittest discover -s tests
