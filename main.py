@@ -2,6 +2,7 @@ import os
 import sqlite3
 from flask import Flask, request, jsonify
 from controller import main as rag_main
+from data_ingestion import load_documents, preprocess_documents
 import pyttsx3  # Text-to-Speech (TTS) library
 
 # Initialize Flask app
@@ -30,7 +31,6 @@ def fetch_files_from_database(query):
         conn = sqlite3.connect(database_path)
         cursor = conn.cursor()
         
-        # Modify the query to match the database schema
         cursor.execute("SELECT filename, content FROM project_files WHERE content LIKE ?", ('%' + query + '%',))
         files = cursor.fetchall()
         
@@ -39,6 +39,24 @@ def fetch_files_from_database(query):
     except sqlite3.Error as e:
         print(f"Error accessing database: {e}")
         return []
+
+def fetch_files_from_raw(query):
+    """
+    Fetch files from the raw directory based on a query.
+    
+    Args:
+    - query (str): The search query to filter files.
+    
+    Returns:
+    - List of tuples containing file metadata and content from raw files.
+    """
+    documents, filenames = load_documents(raw_folder_path)
+    processed_docs = preprocess_documents(documents)
+
+    # Filter documents based on the query
+    matched_docs = [(filenames[i], doc) for i, doc in enumerate(processed_docs) if query.lower() in doc.lower()]
+    
+    return matched_docs
 
 # Endpoint to generate a response from the RAG system
 @app.route('/generate', methods=['POST'])
@@ -49,8 +67,11 @@ def generate():
     if not query:
         return jsonify({"error": "Query not provided"}), 400
     
-    # Fetch relevant files from the database based on the query
-    retrieved_docs = fetch_files_from_database(query)
+    # Check if the database is populated; use raw files if not
+    if os.path.exists(database_path) and os.path.getsize(database_path) > 0:
+        retrieved_docs = fetch_files_from_database(query)
+    else:
+        retrieved_docs = fetch_files_from_raw(query)
     
     if not retrieved_docs:
         return jsonify({"error": "No relevant documents found"}), 404
