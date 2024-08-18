@@ -17,13 +17,16 @@ class ResponseGenerator:
         self.max_input_length = int(max_input_length or os.getenv("MAX_INPUT_LENGTH", 512))
         self.max_output_length = int(max_output_length or os.getenv("MAX_OUTPUT_LENGTH", 150))
         
+        # Set up logger
+        self.logger = logging.getLogger(__name__)
+
         try:
-            logger.info(f"Loading model and tokenizer for '{self.model_name}'...")
+            self.logger.info(f"Loading model and tokenizer for '{self.model_name}'...")
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
             self.model = AutoModelForSeq2SeqLM.from_pretrained(self.model_name)
-            logger.info("Model and tokenizer loaded successfully.")
+            self.logger.info("Model and tokenizer loaded successfully.")
         except Exception as e:
-            logger.error(f"Error loading model '{self.model_name}': {str(e)}")
+            self.logger.error(f"Error loading model '{self.model_name}': {str(e)}")
             raise
 
     def generate_response(self, retrieved_docs, num_beams=5):
@@ -39,19 +42,19 @@ class ResponseGenerator:
         """
         try:
             input_text = " ".join([f"{doc[0]}: {doc[1]}" for doc in retrieved_docs])
-            logger.info("Encoding input text...")
+            self.logger.info("Encoding input text...")
             inputs = self.tokenizer.encode(input_text, return_tensors="pt", max_length=self.max_input_length, truncation=True)
 
-            logger.info("Generating response...")
+            self.logger.info("Generating response...")
             with torch.no_grad():
                 outputs = self.model.generate(inputs, max_length=self.max_output_length, num_beams=num_beams, early_stopping=True)
 
             response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-            logger.info("Response generated successfully.")
+            self.logger.info("Response generated successfully.")
             return response
 
         except Exception as e:
-            logger.error(f"Error generating response: {str(e)}")
+            self.logger.error(f"Error generating response: {str(e)}")
             raise
 
 if __name__ == "__main__":
