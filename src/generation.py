@@ -64,11 +64,25 @@ if __name__ == "__main__":
         logging.basicConfig(level=log_level)
         logger = logging.getLogger(__name__)
 
-        # Example retrieved documents
-        retrieved_docs = [
-            ("Document1", "This is content from document 1."),
-            ("Document2", "This is content from document 2.")
-        ]
+        # Example queries for testing
+        query_type = "quantum computing"
+        logger.info(f"Generating response for query type: '{query_type}'")
+        
+        if query_type == "quantum computing":
+            retrieved_docs = [
+                ("05_quantum_computing_future.txt", "Quantum computing is the study of how to use phenomena in quantum physics to create new ways of computing."),
+                ("01_physics_with_wit_and_wisdom.txt", "Physics is the foundation of all science, including the study of quantum computing.")
+            ]
+        elif query_type == "history":
+            retrieved_docs = [
+                ("07_gods_of_thunder_mythology.txt", "Mythology often blends with history, giving us legends like the gods of thunder."),
+                ("02_science_with_a_twist.txt", "Science has always been interwoven with history, shaping the course of human civilization.")
+            ]
+        else:
+            retrieved_docs = [
+                ("03_sci_fi_and_reality.txt", "Science fiction explores the boundaries between what is possible and what is imagined."),
+                ("06_time_travel_fact_vs_fiction.txt", "Time travel has fascinated scientists and storytellers alike, blurring the line between fact and fiction.")
+            ]
 
         logger.info("Initializing response generator...")
         generator = ResponseGenerator()
