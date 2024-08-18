@@ -1,4 +1,3 @@
-
 name: CI Pipeline
 
 on:
@@ -32,6 +31,16 @@ jobs:
 
     - name: Install dependencies
       run: pip install -r requirements.txt
+
+    - name: Prepare directories and check for existing knowledge base
+      run: |
+        mkdir -p data/processed
+        if [ ! -f "data/processed/vectorizer.pkl" ]; then
+          echo "Knowledge base binaries not found. Running setup script..."
+          python src/data_ingestion.py  # Run your data ingestion or setup script here
+        else
+          echo "Knowledge base binaries found. Skipping setup."
+        fi
 
     - name: Run unit tests
       run: python -m unittest discover -s tests
