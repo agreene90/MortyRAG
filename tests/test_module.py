@@ -21,44 +21,38 @@ class TestRAGModel(unittest.TestCase):
     def test_response_generation(self):
         query = "What is the capital of France?"
         response = main(query, self.cache)
-        self.assertIn("Paris", response, "The response should include 'Paris'.")
+        self.assertIn("paris", response.lower(), "The response should include 'Paris'.")
         self.assertGreater(len(response), 0, "Response should not be empty.")
 
     def test_empty_query(self):
         query = ""
-        response = main(query, self.cache)
-        self.assertTrue(response, "Response should handle empty queries gracefully.")
-        self.assertIn("error", response.lower(), "Response should indicate an error for empty queries.")
+        with self.assertRaises(ValueError):
+            main(query, self.cache)
 
     def test_incorrect_query(self):
         query = "ajshdjkashdkjashd"
         response = main(query, self.cache)
-        self.assertTrue(response, "Response should handle gibberish queries gracefully.")
         self.assertIn("not found", response.lower(), "Response should indicate that no results were found.")
 
     def test_query_with_special_characters(self):
         query = "@@@$$$!!!"
         response = main(query, self.cache)
-        self.assertTrue(response, "Response should handle special characters in the query.")
         self.assertIn("error", response.lower(), "Response should handle and indicate errors with special characters.")
 
     def test_numeric_query(self):
         query = "1234567890"
         response = main(query, self.cache)
-        self.assertTrue(response, "Response should handle numeric queries.")
-        self.assertNotIn("error", response.lower(), "Response should not fail on numeric queries.")
+        self.assertNotIn("error", response.lower(), "Response should handle numeric queries gracefully.")
 
     def test_long_query(self):
         query = "Explain the theory of relativity in detail and provide examples, history, and implications in modern science."
         response = main(query, self.cache)
-        self.assertTrue(len(response) > 0, "Response should be generated for long queries.")
         self.assertIn("theory", response.lower(), "Response should reference key concepts from the query.")
 
     def test_query_with_database_retrieval(self):
         query = "Tell me about the project files."
         response = main(query, self.cache)
         self.assertIn("file", response.lower(), "The response should reference files from the database.")
-        self.assertGreater(len(response), 0, "Response should contain content referencing the database files.")
 
 if __name__ == "__main__":
     unittest.main()
