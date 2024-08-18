@@ -14,15 +14,15 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: '3.8'
 
     - name: Cache pip
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -49,7 +49,7 @@ jobs:
       run: docker build -t your-rag-system .
 
     - name: Save Docker image to cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: /home/runner/work/_temp/docker_cache
         key: docker-${{ runner.os }}-${{ hashFiles('Dockerfile') }}
@@ -58,3 +58,10 @@ jobs:
 
     - name: Test Docker image
       run: docker run --rm your-rag-system python -m unittest discover -s tests
+
+    - name: Publish Docker image
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: |
+        echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+        docker tag your-rag-system:latest your-dockerhub-username/your-rag-system:latest
+        docker push your-dockerhub-username/your-rag-system:latest
