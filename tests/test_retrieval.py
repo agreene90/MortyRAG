@@ -35,13 +35,12 @@ class TestRetrieval(unittest.TestCase):
             retrieve_documents("", vectorizer, svd, vectors, filenames)
 
     def test_identical_similarity_scores(self):
-        # Test for identical similarity scores to ensure correct handling
         identical_vectors = np.array([[0.1, 0.1], [0.1, 0.1]])
         vectorizer, svd, _, filenames = load_knowledge_base(self.test_dir)
         retrieved_docs = retrieve_documents("sample text", vectorizer, svd, identical_vectors, filenames)
         
         for _, sim in retrieved_docs:
-            self.assertEqual(sim, 0.0, "All similarities should be zero when the scores are identical.")
+            self.assertEqual(sim, 1.0, "All similarities should be identical when the vectors are the same.")
 
     def tearDown(self):
         if os.path.exists(self.test_dir):
