@@ -4,6 +4,11 @@ from flask import Flask, request, jsonify
 from controller import main as rag_main
 from data_ingestion import load_documents, preprocess_documents
 import pyttsx3  # Text-to-Speech (TTS) library
+import logging
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -28,17 +33,18 @@ def fetch_files_from_database(query):
     - List of tuples containing file metadata and content.
     """
     try:
+        logger.info(f"Fetching files from the database for query: {query}")
         conn = sqlite3.connect(database_path)
         cursor = conn.cursor()
         
-        # Modify the query to match the database schema
         cursor.execute("SELECT filename, content FROM project_files WHERE content LIKE ?", ('%' + query + '%',))
         files = cursor.fetchall()
         
         conn.close()
+        logger.info(f"Retrieved {len(files)} files from the database.")
         return files
     except sqlite3.Error as e:
-        print(f"Error accessing database: {e}")
+        logger.error(f"Error accessing database: {e}")
         return []
 
 def fetch_files_from_raw(query):
@@ -52,21 +58,26 @@ def fetch_files_from_raw(query):
     - List of tuples containing file metadata and content.
     """
     try:
+        logger.info(f"Fetching files from the raw directory for query: {query}")
         documents, filenames = load_documents(raw_folder_path)
         processed_docs = preprocess_documents(documents)
         retrieved_docs = [(filenames[i], processed_docs[i]) for i in range(len(processed_docs)) if query.lower() in processed_docs[i].lower()]
+        logger.info(f"Retrieved {len(retrieved_docs)} files from the raw directory.")
         return retrieved_docs
     except Exception as e:
-        print(f"Error accessing raw files: {e}")
+        logger.error(f"Error accessing raw files: {e}")
         return []
 
-# Endpoint to generate a response from the RAG system
 @app.route('/generate', methods=['POST'])
 def generate():
+    """
+    Endpoint to generate a response from the RAG system.
+    """
     data = request.get_json()
     query = data.get('query', '')
     
     if not query:
+        logger.warning("No query provided in the request.")
         return jsonify({"error": "Query not provided"}), 400
     
     # Fetch relevant files from the database based on the query
@@ -77,20 +88,26 @@ def generate():
         retrieved_docs = fetch_files_from_raw(query)
         
         if not retrieved_docs:
+            logger.warning("No relevant documents found for the query.")
             return jsonify({"error": "No relevant documents found"}), 404
     
     # Generate response using the RAG system
-    response = rag_main(retrieved_docs)
+    response = rag_main(query, retrieved_docs)
     
     # Convert the response to speech
+    logger.info("Converting generated response to speech.")
     tts_engine.say(response)
     tts_engine.runAndWait()
     
+    logger.info("Response generated and sent successfully.")
     return jsonify({"response": response})
 
-# Entry point for Gunicorn
 def create_app():
+    """
+    Create and return the Flask app instance.
+    """
     return app
 
 if __name__ == "__main__":
+    logger.info("Starting Flask server...")
     app.run(host='0.0.0.0', port=5000)
