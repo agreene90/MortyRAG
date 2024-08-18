@@ -1,7 +1,7 @@
 from data_ingestion import preprocess_documents
 from knowledge_base import load_knowledge_base
 from retrieval import retrieve_documents
-from generation import generate_response
+from generation import ResponseGenerator  # Import the ResponseGenerator class
 import os
 import logging
 
@@ -35,8 +35,11 @@ def main(query, cache):
         # Retrieve documents based on the query
         retrieved_docs = retrieve_documents(query, cache['vectorizer'], cache['svd'], cache['vectors'], cache['filenames'])
         
+        # Instantiate the ResponseGenerator
+        generator = ResponseGenerator()
+
         # Generate a response based on the retrieved documents
-        response = generate_response(retrieved_docs)
+        response = generator.generate_response(retrieved_docs)
         
         return response
     except Exception as e:
