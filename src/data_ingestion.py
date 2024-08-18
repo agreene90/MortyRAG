@@ -25,12 +25,24 @@ def load_documents(directory):
     
     try:
         logger.info(f"Loading documents from directory: {directory}")
+        
+        if not os.path.exists(directory):
+            raise FileNotFoundError(f"Directory not found: {directory}")
+        
         for filename in os.listdir(directory):
             if filename.endswith(".txt"):
                 filepath = os.path.join(directory, filename)
                 with open(filepath, 'r', encoding='utf-8') as f:
-                    documents.append(f.read())
-                    filenames.append(filename)
+                    content = f.read().strip()
+                    if content:
+                        documents.append(content)
+                        filenames.append(filename)
+                    else:
+                        logger.warning(f"Empty document skipped: {filename}")
+        
+        if not documents:
+            raise ValueError("No documents were loaded. Check the directory for valid text files.")
+        
         logger.info(f"Loaded {len(documents)} documents successfully.")
     except Exception as e:
         logger.error(f"Error loading documents: {str(e)}")
@@ -50,7 +62,14 @@ def preprocess_documents(documents):
     """
     try:
         logger.info("Preprocessing documents...")
+        if not documents:
+            raise ValueError("No documents provided for preprocessing.")
+        
         processed_docs = [doc.lower().replace('\n', ' ').replace('\r', '').strip() for doc in documents]
+        
+        if not processed_docs:
+            raise ValueError("Preprocessing resulted in empty documents. Check preprocessing steps.")
+        
         logger.info("Documents preprocessed successfully.")
         return processed_docs
     except Exception as e:
@@ -72,10 +91,17 @@ def vectorize_documents(documents, n_components=100):
     """
     try:
         logger.info("Vectorizing documents using TF-IDF...")
+        
+        if not documents:
+            raise ValueError("No documents provided for vectorization.")
+        
         vectorizer = TfidfVectorizer(max_df=0.95, min_df=2, stop_words='english')
         vectors = vectorizer.fit_transform(documents)
         
         logger.info(f"Reducing dimensionality to {n_components} components with SVD...")
+        if vectors.shape[1] < n_components:
+            raise ValueError(f"Number of components ({n_components}) cannot exceed the number of features ({vectors.shape[1]})")
+        
         svd = TruncatedSVD(n_components=n_components)
         reduced_vectors = svd.fit_transform(vectors)
         
@@ -122,15 +148,13 @@ if __name__ == "__main__":
         data_directory = "./data/raw"
         save_directory = "./data/processed"
         
-        os.makedirs(save_directory, exist_ok=True)
-
-        logger.info("Starting document processing...")
+        logger.info("Starting document processing pipeline...")
         documents, filenames = load_documents(data_directory)
         preprocessed_docs = preprocess_documents(documents)
         vectorizer, svd, vectors = vectorize_documents(preprocessed_docs)
-        
         save_preprocessed_data(vectorizer, svd, vectors, filenames, save_directory)
-        logger.info("Document processing completed successfully.")
+        
+        logger.info("Document processing pipeline completed successfully.")
     
     except Exception as e:
         logger.error(f"An error occurred during the document processing pipeline: {str(e)}")
