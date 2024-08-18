@@ -29,10 +29,19 @@ def retrieve_documents(query, vectorizer, svd, vectors, filenames, top_k=5, norm
     try:
         logger.info("Transforming the query into vector space...")
         query_vec = vectorizer.transform([query])
-        reduced_query_vec = svd.transform(query_vec)
+        
+        if svd is not None:
+            reduced_query_vec = svd.transform(query_vec)
+        else:
+            logger.warning("SVD model is not provided; skipping dimensionality reduction.")
+            reduced_query_vec = query_vec
         
         logger.info("Computing cosine similarities...")
         similarities = cosine_similarity(reduced_query_vec, vectors).flatten()
+        
+        if similarities.size == 0:
+            logger.warning("No similarities were computed, returning an empty result.")
+            return []
         
         if normalize:
             if np.all(similarities == similarities[0]):
@@ -43,9 +52,12 @@ def retrieve_documents(query, vectorizer, svd, vectors, filenames, top_k=5, norm
         logger.info("Ranking documents based on similarity scores...")
         ranked_indices = np.argsort(similarities)[-top_k:][::-1]
         
-        retrieved_docs = [(filenames[i], similarities[i]) for i in ranked_indices]
+        retrieved_docs = [(filenames[i], similarities[i]) for i in ranked_indices if similarities[i] > 0]
         
-        logger.info(f"Retrieved top {top_k} documents successfully.")
+        if not retrieved_docs:
+            logger.warning("No documents with non-zero similarity scores were found.")
+        
+        logger.info(f"Retrieved top {len(retrieved_docs)} documents successfully.")
         return retrieved_docs
     
     except Exception as e:
@@ -54,16 +66,27 @@ def retrieve_documents(query, vectorizer, svd, vectors, filenames, top_k=5, norm
 
 if __name__ == "__main__":
     try:
-        query = "Tell me about the Eiffel Tower"
-        logger.info(f"Loading knowledge base...")
+        queries = [
+            "Explain quantum computing and its applications.",
+            "Discuss the history of the Roman Empire."
+        ]
+        
+        logger.info("Loading knowledge base...")
         vectorizer, svd, vectors, filenames = load_knowledge_base("./data/processed")
         
-        logger.info(f"Retrieving documents for query: '{query}'")
-        retrieved_docs = retrieve_documents(query, vectorizer, svd, vectors, filenames, top_k=5)
-        
-        print("Top retrieved documents:")
-        for doc in retrieved_docs:
-            print(f"Document: {doc[0]}, Similarity: {doc[1]:.4f}")
+        if not vectors.size or not filenames:
+            logger.error("Knowledge base appears to be empty or improperly loaded.")
+        else:
+            for query in queries:
+                logger.info(f"Retrieving documents for query: '{query}'")
+                retrieved_docs = retrieve_documents(query, vectorizer, svd, vectors, filenames, top_k=5)
+                
+                if retrieved_docs:
+                    print(f"\nTop retrieved documents for query '{query}':")
+                    for doc in retrieved_docs:
+                        print(f"Document: {doc[0]}, Similarity: {doc[1]:.4f}")
+                else:
+                    print(f"No relevant documents found for query '{query}'.")
     
     except Exception as e:
         logger.error(f"An error occurred in the retrieval process: {str(e)}")
