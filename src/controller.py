@@ -28,7 +28,7 @@ def main(query, cache):
     """
     try:
         # Check if the cache is already populated
-        if not all(key in cache for key in ('vectorizer', 'svd', 'vectors', 'filenames')):
+        if not all(cache.get(key) is not None for key in ('vectorizer', 'svd', 'vectors', 'filenames')):
             logger.info("Cache is empty or incomplete, loading data...")
             cache['vectorizer'], cache['svd'], cache['vectors'], cache['filenames'] = load_cached_model()
         
