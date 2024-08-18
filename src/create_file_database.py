@@ -35,6 +35,7 @@ def create_table(conn):
         logger.info("Project files table created successfully.")
     except sqlite3.Error as e:
         logger.error(f"Error creating table: {str(e)}")
+        raise
 
 def insert_file_data(conn, file_data):
     """Insert a new file record into the project_files table."""
@@ -48,6 +49,7 @@ def insert_file_data(conn, file_data):
         logger.info(f"Inserted file data into the database: {file_data[0]}")
     except sqlite3.Error as e:
         logger.error(f"Error inserting file data: {str(e)}")
+        raise
 
 def get_file_content(filepath, filetype):
     """Read and return the content of the file if it's a text-based file."""
@@ -62,40 +64,53 @@ def get_file_content(filepath, filetype):
 
 def scan_directory_and_populate_db(conn, directory):
     """Scan the directory and populate the database with file metadata and contents."""
-    total_files = sum([len(files) for r, d, files in os.walk(directory)])
-    processed_files = 0
+    try:
+        total_files = sum([len(files) for r, d, files in os.walk(directory)])
+        processed_files = 0
 
-    for root, dirs, files in os.walk(directory):
-        for file in files:
-            filepath = os.path.join(root, file)
-            filetype = os.path.splitext(file)[1].lower()
-            filesize = os.path.getsize(filepath)
-            last_modified = datetime.fromtimestamp(os.path.getmtime(filepath)).strftime('%Y-%m-%d %H:%M:%S')
-            content = get_file_content(filepath, filetype)
-            file_data = (file, filepath, filetype, filesize, last_modified, content)
-            insert_file_data(conn, file_data)
-            processed_files += 1
-            logger.info(f"Processed {processed_files}/{total_files} files")
+        for root, dirs, files in os.walk(directory):
+            for file in files:
+                filepath = os.path.join(root, file)
+                filetype = os.path.splitext(file)[1].lower()
+                filesize = os.path.getsize(filepath)
+                last_modified = datetime.fromtimestamp(os.path.getmtime(filepath)).strftime('%Y-%m-%d %H:%M:%S')
+                content = get_file_content(filepath, filetype)
+                file_data = (file, filepath, filetype, filesize, last_modified, content)
+                
+                insert_file_data(conn, file_data)
+                
+                processed_files += 1
+                logger.info(f"Processed {processed_files}/{total_files} files")
+
+    except Exception as e:
+        logger.error(f"Error scanning directory and populating database: {str(e)}")
+        raise
 
 def initialize_database():
     """Initialize the database in the ./data/files/resources/ directory."""
-    # Set up the database path in the ./data/files/resources/ directory
-    database_directory = "./data/files/resources/"
-    os.makedirs(database_directory, exist_ok=True)
-    database_file = os.path.join(database_directory, "project_files.db")
+    try:
+        # Set up the database path in the ./data/files/resources/ directory
+        database_directory = "./data/files/resources/"
+        os.makedirs(database_directory, exist_ok=True)
+        database_file = os.path.join(database_directory, "project_files.db")
+        files_directory = "./data/files"
 
-    files_directory = "./data/files"
+        # Create a database connection
+        conn = create_connection(database_file)
+        
+        if conn:
+            # Create project_files table
+            create_table(conn)
+            
+            # Scan the files directory and populate the database
+            scan_directory_and_populate_db(conn, files_directory)
+            
+            # Close the connection
+            conn.close()
+            logger.info("Database creation and population completed successfully.")
+    except Exception as e:
+        logger.error(f"An error occurred during database initialization: {str(e)}")
+        raise
 
-    # Create a database connection
-    conn = create_connection(database_file)
-    
-    if conn:
-        # Create project_files table
-        create_table(conn)
-        
-        # Scan the files directory and populate the database
-        scan_directory_and_populate_db(conn, files_directory)
-        
-        # Close the connection
-        conn.close()
-        logger.info("Database creation and population completed successfully.")
+if __name__ == "__main__":
+    initialize_database()
