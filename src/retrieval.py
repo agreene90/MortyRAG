@@ -24,26 +24,45 @@ def retrieve_documents(query, vectorizer, svd, vectors, filenames, top_k=5, norm
     - A list of tuples with the top-k filenames and their corresponding similarity scores.
     """
     try:
+        if not query:
+            raise ValueError("The query string is empty.")
+
+        if vectors is None or len(vectors) == 0:
+            raise ValueError("The document vectors are empty or not provided.")
+
+        if len(filenames) != vectors.shape[0]:
+            raise ValueError("The number of filenames does not match the number of document vectors.")
+
         logger.info("Transforming the query into vector space...")
         query_vec = vectorizer.transform([query])
         reduced_query_vec = svd.transform(query_vec)
-        
+
         logger.info("Computing cosine similarities...")
         similarities = cosine_similarity(reduced_query_vec, vectors).flatten()
-        
+
         if normalize:
-            similarities = (similarities - similarities.min()) / (similarities.max() - similarities.min())
-        
+            max_sim = similarities.max()
+            min_sim = similarities.min()
+
+            if max_sim == min_sim:
+                logger.warning("All similarity scores are identical; skipping normalization.")
+                similarities = np.zeros_like(similarities)
+            else:
+                similarities = (similarities - min_sim) / (max_sim - min_sim)
+
         logger.info("Ranking documents based on similarity scores...")
         ranked_indices = np.argsort(similarities)[-top_k:][::-1]
         
         retrieved_docs = [(filenames[i], similarities[i]) for i in ranked_indices]
-        
+
         logger.info(f"Retrieved top {top_k} documents successfully.")
         return retrieved_docs
     
+    except ValueError as ve:
+        logger.error(f"ValueError during document retrieval: {str(ve)}")
+        raise
     except Exception as e:
-        logger.error(f"Error during document retrieval: {str(e)}")
+        logger.error(f"Unexpected error during document retrieval: {str(e)}")
         raise
 
 if __name__ == "__main__":
