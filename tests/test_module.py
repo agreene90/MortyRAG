@@ -10,7 +10,7 @@ from controller import main  # Import the main function from controller.py
 class TestRAGModel(unittest.TestCase):
 
     def setUp(self):
-        # Initialize a cache for each test, mimicking a partially loaded knowledge base
+        # Initialize a cache for each test
         self.cache = {
             'vectorizer': None,
             'svd': None,
