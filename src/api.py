@@ -27,14 +27,11 @@ model_cache = {
 def load_model():
     """
     Load the model and other necessary components before the first request.
+    This ensures the model is loaded into memory once and reused for subsequent requests.
     """
     try:
-        logger.info("Loading model and data...")
-        vectorizer, svd, vectors, filenames = rag_main.load_knowledge_base("./data/processed")
-        model_cache['vectorizer'] = vectorizer
-        model_cache['svd'] = svd
-        model_cache['vectors'] = vectors
-        model_cache['filenames'] = filenames
+        logger.info("Loading model and data for the first time...")
+        model_cache['vectorizer'], model_cache['svd'], model_cache['vectors'], model_cache['filenames'] = rag_main.load_cached_model("./data/processed")
         logger.info("Model and data loaded successfully.")
     except Exception as e:
         logger.error("Error loading model and data: %s", str(e))
@@ -44,25 +41,39 @@ def load_model():
 def generate():
     """
     Endpoint to generate a response from the RAG system.
+    
+    The endpoint expects a JSON payload with the following structure:
+    {
+        "query": "Your query here"
+    }
+    
+    Returns:
+    - JSON response with the generated text based on the query.
     """
     try:
+        # Extract the query from the POST request
         data = request.get_json()
-        query = data.get('query', '')
+        query = data.get('query', '').strip()
         
         if not query:
-            logger.warning("Query not provided in request.")
+            logger.warning("No query provided in the request.")
             return jsonify({"error": "Query not provided"}), 400
         
-        # Generate the response using the RAG system
+        # Process the query using the RAG system
+        logger.info(f"Processing query: '{query}'")
         response = rag_main(query, model_cache)
         
-        logger.info("Query processed successfully.")
+        logger.info("Query processed successfully, returning response.")
         return jsonify({"response": response})
     
     except Exception as e:
         logger.error("Error processing query: %s", str(e))
-        return jsonify({"error": "An error occurred processing your request."}), 500
+        return jsonify({"error": "An error occurred while processing your request."}), 500
 
 if __name__ == "__main__":
-    logger.info(f"Starting server at {HOST}:{PORT}")
-    app.run(host=HOST, port=PORT, debug=DEBUG)
+    try:
+        logger.info(f"Starting server at {HOST}:{PORT}")
+        app.run(host=HOST, port=PORT, debug=DEBUG)
+    except Exception as e:
+        logger.error("Failed to start the server: %s", str(e))
+        raise
