@@ -42,8 +42,8 @@ class TestKnowledgeBase(unittest.TestCase):
             # Assert that saved and loaded data match
             self.assertTrue(np.array_equal(self.vectors, vectors), "Vectors should match after saving and loading.")
             self.assertEqual(self.filenames, filenames.tolist(), "Filenames should match after saving and loading.")
-            self.assertEqual(type(vectorizer), type(self.vectorizer), "Vectorizer type should match after loading.")
-            self.assertEqual(type(svd), type(self.svd), "SVD model type should match after loading.")
+            self.assertIsInstance(vectorizer, TfidfVectorizer, "Loaded vectorizer should be an instance of TfidfVectorizer.")
+            self.assertIsInstance(svd, TruncatedSVD, "Loaded SVD model should be an instance of TruncatedSVD.")
         except Exception as e:
             logger.error(f"Test failed due to an exception: {str(e)}")
             self.fail(f"Test encountered an exception: {str(e)}")
@@ -67,6 +67,20 @@ class TestKnowledgeBase(unittest.TestCase):
             # Assert that the loaded data matches the saved empty data
             self.assertTrue(np.array_equal(empty_vectors, loaded_vectors), "Vectors should match after saving and loading.")
             self.assertEqual(empty_filenames, loaded_filenames.tolist(), "Filenames should match after saving and loading.")
+            self.assertEqual(len(loaded_vectors), 0, "Loaded vectors should be empty.")
+            self.assertEqual(len(loaded_filenames), 0, "Loaded filenames should be empty.")
+        except Exception as e:
+            logger.error(f"Test failed due to an exception: {str(e)}")
+            self.fail(f"Test encountered an exception: {str(e)}")
+
+    def test_invalid_load(self):
+        """
+        Test loading from an invalid or non-existent directory.
+        """
+        try:
+            with self.assertRaises(RuntimeError):
+                load_knowledge_base("./non_existent_directory")
+            logger.info("Properly handled invalid load attempt.")
         except Exception as e:
             logger.error(f"Test failed due to an exception: {str(e)}")
             self.fail(f"Test encountered an exception: {str(e)}")
