@@ -1,5 +1,6 @@
 import os
 import logging
+import time
 from flask import Flask, request, jsonify
 from controller import main as rag_main
 
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 # Load environment variables for configuration
 HOST = os.getenv('HOST', '0.0.0.0')
 PORT = int(os.getenv('PORT', 5000))
-DEBUG = bool(os.getenv('DEBUG', False))
+DEBUG = bool(int(os.getenv('DEBUG', 0)))  # DEBUG as an integer (0 or 1) for environment consistency
 
 # Cache for the model and vectorizer (if needed)
 model_cache = {
@@ -37,6 +38,22 @@ def load_model():
         logger.error("Error loading model and data: %s", str(e))
         raise RuntimeError("Failed to load model and data.") from e
 
+@app.before_request
+def start_timer():
+    """
+    Start a timer before handling the request to measure response time.
+    """
+    request.start_time = time.time()
+
+@app.after_request
+def log_response(response):
+    """
+    Log the details of the response, including processing time.
+    """
+    response_time = time.time() - request.start_time
+    logger.info(f"Request handled in {response_time:.4f} seconds with status {response.status_code}")
+    return response
+
 @app.route('/generate', methods=['POST'])
 def generate():
     """
@@ -51,6 +68,11 @@ def generate():
     - JSON response with the generated text based on the query.
     """
     try:
+        # Validate content type
+        if not request.is_json:
+            logger.warning("Invalid content-type. Expected application/json.")
+            return jsonify({"error": "Invalid content-type. Expected application/json."}), 415
+
         # Extract the query from the POST request
         data = request.get_json()
         query = data.get('query', '').strip()
@@ -70,9 +92,17 @@ def generate():
         logger.error("Error processing query: %s", str(e))
         return jsonify({"error": "An error occurred while processing your request."}), 500
 
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    """
+    Handle cleanup of resources after the request context ends.
+    """
+    if exception:
+        logger.error(f"Teardown exception: {str(exception)}")
+
 if __name__ == "__main__":
     try:
-        logger.info(f"Starting server at {HOST}:{PORT}")
+        logger.info(f"Starting server at {HOST}:{PORT} with DEBUG={DEBUG}")
         app.run(host=HOST, port=PORT, debug=DEBUG)
     except Exception as e:
         logger.error("Failed to start the server: %s", str(e))
