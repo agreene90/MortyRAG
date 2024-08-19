@@ -35,7 +35,7 @@ jobs:
     - name: Prepare directories and check for existing knowledge base
       run: |
         mkdir -p data/processed
-        if [ ! -f "data/processed/vectorizer.pkl" ]; then
+        if [ ! -f "data/processed/vectorizer_v1.pkl" ]; then
           echo "Knowledge base binaries not found. Running setup script..."
           python src/data_ingestion.py  # Run your data ingestion or setup script here
         else
@@ -63,5 +63,5 @@ jobs:
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: |
         echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
-        docker tag your-rag-system:latest your-dockerhub-username/your-rag-system:latest
-        docker push your-dockerhub-username/your-rag-system:latest
+        docker tag your-rag-system:latest ${{ secrets.DOCKERHUB_USERNAME }}/your-rag-system:latest
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/your-rag-system:latest
