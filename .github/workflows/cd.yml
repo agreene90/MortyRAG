@@ -13,36 +13,48 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v2
+    - name: Download executable
+      uses: actions/download-artifact@v3
       with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+        name: your-executable
+        path: ./executable
 
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: true
-        tags: your-dockerhub-username/your-rag-system:latest
-
-    - name: Remove existing container (if any)
+    - name: Remove existing service (if any)
       run: |
-        if [ "$(docker ps -q -f name=rag-system)" ]; then
-          docker stop rag-system
-          docker rm rag-system
-        fi
+        sudo systemctl stop your-service-name || true
+        sudo systemctl disable your-service-name || true
+        sudo rm /etc/systemd/system/your-service-name.service || true
       continue-on-error: true
 
-    - name: Deploy new container
+    - name: Copy executable to /usr/local/bin
       run: |
-        docker pull your-dockerhub-username/your-rag-system:latest
-        docker run -d --name rag-system -p 5000:5000 your-dockerhub-username/your-rag-system:latest
+        sudo cp ./executable/your_executable_name /usr/local/bin/your_executable_name
+        sudo chmod +x /usr/local/bin/your_executable_name
+
+    - name: Create systemd service file
+      run: |
+        echo "[Unit]
+        Description=Your Flask Application Service
+        After=network.target
+
+        [Service]
+        ExecStart=/usr/local/bin/your_executable_name
+        WorkingDirectory=/usr/local/bin
+        Restart=always
+        User=your_user
+        Group=your_group
+        Environment=PORT=5000
+
+        [Install]
+        WantedBy=multi-user.target" | sudo tee /etc/systemd/system/your-service-name.service
+
+    - name: Start and enable the service
+      run: |
+        sudo systemctl daemon-reload
+        sudo systemctl start your-service-name
+        sudo systemctl enable your-service-name
 
     - name: Verify deployment
       run: |
-        sleep 10  # Wait a bit for the container to start
+        sleep 10  # Wait a bit for the service to start
         curl --fail http://localhost:5000 || (echo "Deployment failed"; exit 1)
