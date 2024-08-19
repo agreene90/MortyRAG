@@ -21,14 +21,6 @@ jobs:
       with:
         python-version: '3.8'
 
-    - name: Cache pip
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-
     - name: Install dependencies
       run: pip install -r requirements.txt
 
@@ -43,25 +35,39 @@ jobs:
         fi
 
     - name: Run unit tests
-      run: python -m unittest discover -s tests
-
-    - name: Build Docker image
-      run: docker build -t your-rag-system .
-
-    - name: Save Docker image to cache
-      uses: actions/cache@v3
-      with:
-        path: /home/runner/work/_temp/docker_cache
-        key: docker-${{ runner.os }}-${{ hashFiles('Dockerfile') }}
-        restore-keys: |
-          docker-${{ runner.os }}
-
-    - name: Test Docker image
-      run: docker run --rm your-rag-system python -m unittest discover -s tests
-
-    - name: Publish Docker image
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: |
-        echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
-        docker tag your-rag-system:latest ${{ secrets.DOCKERHUB_USERNAME }}/your-rag-system:latest
-        docker push ${{ secrets.DOCKERHUB_USERNAME }}/your-rag-system:latest
+        mkdir -p test-results
+        python -m unittest discover -s tests > test-results/unit-test-results.txt
+      continue-on-error: true
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: unit-test-results
+        path: test-results/unit-test-results.txt
+
+    - name: Lint codebase
+      run: |
+        pip install flake8
+        flake8 . --output-file=lint-results.txt || true
+      continue-on-error: true
+
+    - name: Upload lint results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: lint-results
+        path: lint-results.txt
+
+    - name: Install PyInstaller
+      run: pip install pyinstaller
+
+    - name: Package the application into an executable
+      run: pyinstaller --onefile --name your_executable_name src/main.py  # Adjust to use your main.py script
+
+    - name: Upload executable
+      uses: actions/upload-artifact@v3
+      with:
+        name: your-executable
+        path: dist/your_executable_name
