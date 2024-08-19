@@ -41,14 +41,30 @@ class ResponseGenerator:
         - response: The generated response as a string.
         """
         try:
+            # Prepare input text for the model
             input_text = " ".join([f"{doc[0]}: {doc[1]}" for doc in retrieved_docs])
-            self.logger.info("Encoding input text...")
-            inputs = self.tokenizer.encode(input_text, return_tensors="pt", max_length=self.max_input_length, truncation=True)
+            self.logger.info(f"Input text prepared for model: {input_text[:100]}... (truncated for display)")
 
+            # Tokenize and encode the input text
+            self.logger.info("Encoding input text...")
+            inputs = self.tokenizer.encode(
+                input_text, 
+                return_tensors="pt", 
+                max_length=self.max_input_length, 
+                truncation=True
+            )
+
+            # Generate response using the model
             self.logger.info("Generating response...")
             with torch.no_grad():
-                outputs = self.model.generate(inputs, max_length=self.max_output_length, num_beams=num_beams, early_stopping=True)
+                outputs = self.model.generate(
+                    inputs, 
+                    max_length=self.max_output_length, 
+                    num_beams=num_beams, 
+                    early_stopping=True
+                )
 
+            # Decode the model output into a human-readable string
             response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
             self.logger.info("Response generated successfully.")
             return response
@@ -68,21 +84,20 @@ if __name__ == "__main__":
         query_type = "quantum computing"
         logger.info(f"Generating response for query type: '{query_type}'")
         
-        if query_type == "quantum computing":
-            retrieved_docs = [
+        retrieved_docs = {
+            "quantum computing": [
                 ("05_quantum_computing_future.txt", "Quantum computing is the study of how to use phenomena in quantum physics to create new ways of computing."),
                 ("01_physics_with_wit_and_wisdom.txt", "Physics is the foundation of all science, including the study of quantum computing.")
-            ]
-        elif query_type == "history":
-            retrieved_docs = [
+            ],
+            "history": [
                 ("07_gods_of_thunder_mythology.txt", "Mythology often blends with history, giving us legends like the gods of thunder."),
                 ("02_science_with_a_twist.txt", "Science has always been interwoven with history, shaping the course of human civilization.")
-            ]
-        else:
-            retrieved_docs = [
+            ],
+            "default": [
                 ("03_sci_fi_and_reality.txt", "Science fiction explores the boundaries between what is possible and what is imagined."),
                 ("06_time_travel_fact_vs_fiction.txt", "Time travel has fascinated scientists and storytellers alike, blurring the line between fact and fiction.")
             ]
+        }.get(query_type, retrieved_docs["default"])
 
         logger.info("Initializing response generator...")
         generator = ResponseGenerator()
