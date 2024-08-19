@@ -32,16 +32,19 @@ def load_documents(directory):
         for filename in os.listdir(directory):
             if filename.endswith(".txt"):
                 filepath = os.path.join(directory, filename)
-                with open(filepath, 'r', encoding='utf-8') as f:
-                    content = f.read().strip()
-                    if content:
-                        documents.append(content)
-                        filenames.append(filename)
-                    else:
-                        logger.warning(f"Empty document skipped: {filename}")
+                try:
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        content = f.read().strip()
+                        if content:
+                            documents.append(content)
+                            filenames.append(filename)
+                        else:
+                            logger.warning(f"Empty document skipped: {filename}")
+                except Exception as e:
+                    logger.error(f"Error reading file {filename}: {str(e)}")
         
         if not documents:
-            raise ValueError("No documents were loaded. Check the directory for valid text files.")
+            raise ValueError("No documents were loaded. Ensure the directory contains valid text files.")
         
         logger.info(f"Loaded {len(documents)} documents successfully.")
     except Exception as e:
@@ -67,8 +70,8 @@ def preprocess_documents(documents):
         
         processed_docs = [doc.lower().replace('\n', ' ').replace('\r', '').strip() for doc in documents]
         
-        if not processed_docs:
-            raise ValueError("Preprocessing resulted in empty documents. Check preprocessing steps.")
+        if not any(processed_docs):
+            raise ValueError("Preprocessing resulted in all empty documents. Check preprocessing steps.")
         
         logger.info("Documents preprocessed successfully.")
         return processed_docs
@@ -98,10 +101,11 @@ def vectorize_documents(documents, n_components=100):
         vectorizer = TfidfVectorizer(max_df=0.95, min_df=2, stop_words='english')
         vectors = vectorizer.fit_transform(documents)
         
-        logger.info(f"Reducing dimensionality to {n_components} components with SVD...")
         if vectors.shape[1] < n_components:
-            raise ValueError(f"Number of components ({n_components}) cannot exceed the number of features ({vectors.shape[1]})")
+            logger.warning(f"Number of features ({vectors.shape[1]}) is less than the specified number of components ({n_components}). Adjusting n_components to {vectors.shape[1]}.")
+            n_components = vectors.shape[1]
         
+        logger.info(f"Reducing dimensionality to {n_components} components with SVD...")
         svd = TruncatedSVD(n_components=n_components)
         reduced_vectors = svd.fit_transform(vectors)
         
