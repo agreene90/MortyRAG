@@ -100,7 +100,8 @@ def generate():
                 return jsonify({"error": "No relevant documents found"}), 404
 
         # Generate response using the RAG system
-        response = rag_main(query, retrieved_docs)
+        logger.info("Generating response using the RAG system...")
+        response = rag_main(query, {'vectorizer': None, 'svd': None, 'vectors': None, 'filenames': retrieved_docs})
 
         # Convert the response to speech
         logger.info("Converting generated response to speech.")
