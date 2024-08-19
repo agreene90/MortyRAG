@@ -22,7 +22,7 @@ def create_table(conn):
     try:
         sql_create_table = """
         CREATE TABLE IF NOT EXISTS project_files (
-            id INTEGER PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             filename TEXT NOT NULL,
             filepath TEXT NOT NULL,
             filetype TEXT NOT NULL,
@@ -53,13 +53,12 @@ def insert_file_data(conn, file_data):
 
 def get_file_content(filepath, filetype):
     """Read and return the content of the file if it's a text-based file."""
-    if filetype in ['.txt', '.md', '.py', '.json', '.csv']:  # Add more types as needed
-        try:
+    try:
+        if filetype in ['.txt', '.md', '.py', '.json', '.csv']:  # Add more types as needed
             with open(filepath, 'r', encoding='utf-8') as f:
                 return f.read()
-        except Exception as e:
-            logger.error(f"Error reading file {filepath}: {str(e)}")
-            return None
+    except Exception as e:
+        logger.error(f"Error reading file {filepath}: {str(e)}")
     return None
 
 def scan_directory_and_populate_db(conn, directory):
@@ -68,7 +67,7 @@ def scan_directory_and_populate_db(conn, directory):
         total_files = sum([len(files) for r, d, files in os.walk(directory)])
         processed_files = 0
 
-        for root, dirs, files in os.walk(directory):
+        for root, _, files in os.walk(directory):
             for file in files:
                 filepath = os.path.join(root, file)
                 filetype = os.path.splitext(file)[1].lower()
@@ -108,6 +107,8 @@ def initialize_database():
             # Close the connection
             conn.close()
             logger.info("Database creation and population completed successfully.")
+        else:
+            logger.error("Failed to create database connection. Database initialization aborted.")
     except Exception as e:
         logger.error(f"An error occurred during database initialization: {str(e)}")
         raise
