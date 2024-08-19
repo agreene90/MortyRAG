@@ -23,13 +23,16 @@ def load_cached_model(data_directory="./data/processed"):
     - filenames: A list of filenames corresponding to the document vectors.
     """
     try:
-        logger.info("Loading knowledge base from directory: %s", data_directory)
+        logger.info(f"Loading knowledge base from directory: {data_directory}")
         vectorizer, svd, vectors, filenames = load_knowledge_base(data_directory)
         logger.info("Knowledge base loaded successfully.")
         return vectorizer, svd, vectors, filenames
+    except FileNotFoundError as e:
+        logger.error(f"Knowledge base files not found: {str(e)}")
+        raise RuntimeError("Knowledge base files are missing. Please ensure the knowledge base is properly initialized.") from e
     except Exception as e:
-        logger.error("Failed to load knowledge base: %s", str(e))
-        raise RuntimeError("Error loading knowledge base.") from e
+        logger.error(f"Unexpected error while loading knowledge base: {str(e)}")
+        raise RuntimeError("An unexpected error occurred while loading the knowledge base.") from e
 
 def main(query, cache):
     """
@@ -48,8 +51,12 @@ def main(query, cache):
             logger.info("Cache is empty or incomplete, loading knowledge base...")
             cache['vectorizer'], cache['svd'], cache['vectors'], cache['filenames'] = load_cached_model()
         
+        # Validate the query
+        if not query.strip():
+            raise ValueError("The query string is empty.")
+        
         # Retrieve documents based on the query
-        logger.info("Retrieving documents for query: '%s'", query)
+        logger.info(f"Retrieving documents for query: '{query}'")
         retrieved_docs = retrieve_documents(query, cache['vectorizer'], cache['svd'], cache['vectors'], cache['filenames'])
         
         # Instantiate the ResponseGenerator
@@ -61,9 +68,15 @@ def main(query, cache):
         
         logger.info("Response generation successful.")
         return response
+    except ValueError as e:
+        logger.error(f"Invalid input: {str(e)}")
+        raise
+    except RuntimeError as e:
+        logger.error(f"Runtime error: {str(e)}")
+        raise
     except Exception as e:
-        logger.error("Error generating response: %s", str(e))
-        raise RuntimeError("Error processing the query.") from e
+        logger.error(f"Unexpected error during response generation: {str(e)}")
+        raise RuntimeError("An unexpected error occurred while processing the query.") from e
 
 if __name__ == "__main__":
     try:
@@ -86,4 +99,4 @@ if __name__ == "__main__":
         print(response)
     
     except Exception as e:
-        logger.error("An error occurred during execution: %s", str(e))
+        logger.error(f"An error occurred during execution: {str(e)}")
