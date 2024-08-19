@@ -31,6 +31,8 @@ def retrieve_documents(query, vectorizer, svd, vectors, filenames, top_k=5, norm
         query_vec = vectorizer.transform([query])
         
         if svd is not None:
+            if query_vec.shape[1] != svd.components_.shape[1]:
+                raise ValueError("SVD model and vectorizer output dimensions do not match.")
             reduced_query_vec = svd.transform(query_vec)
         else:
             logger.warning("SVD model is not provided; skipping dimensionality reduction.")
@@ -44,10 +46,10 @@ def retrieve_documents(query, vectorizer, svd, vectors, filenames, top_k=5, norm
             return []
         
         if normalize:
-            if np.all(similarities == similarities[0]):
-                logger.warning("All similarity scores are identical; skipping normalization.")
+            if np.allclose(similarities, similarities[0]):
+                logger.warning("All similarity scores are nearly identical; skipping normalization.")
             else:
-                similarities = (similarities - similarities.min()) / (similarities.max() - similarities.min())
+                similarities = (similarities - np.min(similarities)) / (np.max(similarities) - np.min(similarities))
         
         logger.info("Ranking documents based on similarity scores...")
         ranked_indices = np.argsort(similarities)[-top_k:][::-1]
@@ -60,8 +62,11 @@ def retrieve_documents(query, vectorizer, svd, vectors, filenames, top_k=5, norm
         logger.info(f"Retrieved top {len(retrieved_docs)} documents successfully.")
         return retrieved_docs
     
+    except ValueError as ve:
+        logger.error(f"Value error during document retrieval: {str(ve)}")
+        raise
     except Exception as e:
-        logger.error(f"Error during document retrieval: {str(e)}")
+        logger.error(f"Unexpected error during document retrieval: {str(e)}")
         raise
 
 if __name__ == "__main__":
