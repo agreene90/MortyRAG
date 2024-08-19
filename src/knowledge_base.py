@@ -2,6 +2,8 @@ import os
 import pickle
 import numpy as np
 import logging
+from sklearn.decomposition import TruncatedSVD
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -76,9 +78,9 @@ def load_knowledge_base(filepath, version="v1"):
         logger.info("Knowledge base loaded successfully.")
         
         # Validate the loaded components
-        if not isinstance(vectorizer, type(vectorizer)):
+        if not isinstance(vectorizer, TfidfVectorizer):
             raise ValueError("Loaded vectorizer is not of the correct type.")
-        if not isinstance(svd, type(svd)):
+        if not isinstance(svd, TruncatedSVD):
             raise ValueError("Loaded SVD model is not of the correct type.")
         if vectors.shape[0] != len(filenames):
             raise ValueError("Mismatch between the number of vectors and filenames.")
