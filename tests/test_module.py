@@ -52,48 +52,68 @@ class TestController(unittest.TestCase):
         Test how the controller handles a nonsensical query.
         """
         query = "ajshdjkashdkjashd"
-        response = main(query, self.cache)
-        logger.info(f"Response to incorrect query: {response}")
-        self.assertIn("not found", response.lower(), "Response should indicate that no results were found.")
+        try:
+            response = main(query, self.cache)
+            logger.info(f"Response to incorrect query: {response}")
+            self.assertIn("not found", response.lower(), "Response should indicate that no results were found.")
+        except Exception as e:
+            logger.error(f"Test failed with exception: {str(e)}")
+            self.fail(f"Test encountered an exception: {str(e)}")
 
     def test_query_with_special_characters(self):
         """
         Test how the controller handles a query with special characters.
         """
         query = "@@@$$$!!!"
-        response = main(query, self.cache)
-        logger.info(f"Response to special characters query: {response}")
-        self.assertIn("error", response.lower(), "Response should handle and indicate errors with special characters.")
+        try:
+            response = main(query, self.cache)
+            logger.info(f"Response to special characters query: {response}")
+            self.assertIn("error", response.lower(), "Response should handle and indicate errors with special characters.")
+        except Exception as e:
+            logger.error(f"Test failed with exception: {str(e)}")
+            self.fail(f"Test encountered an exception: {str(e)}")
 
     def test_numeric_query(self):
         """
         Test how the controller handles a numeric query.
         """
         query = "1234567890"
-        response = main(query, self.cache)
-        logger.info(f"Response to numeric query: {response}")
-        self.assertNotIn("error", response.lower(), "Response should handle numeric queries gracefully.")
-        self.assertGreater(len(response), 0, "Response should not be empty for numeric queries.")
+        try:
+            response = main(query, self.cache)
+            logger.info(f"Response to numeric query: {response}")
+            self.assertNotIn("error", response.lower(), "Response should handle numeric queries gracefully.")
+            self.assertGreater(len(response), 0, "Response should not be empty for numeric queries.")
+        except Exception as e:
+            logger.error(f"Test failed with exception: {str(e)}")
+            self.fail(f"Test encountered an exception: {str(e)}")
 
     def test_long_query(self):
         """
         Test the controller's handling of a long and complex query.
         """
         query = "Explain the theory of relativity in detail and provide examples, history, and implications in modern science."
-        response = main(query, self.cache)
-        logger.info(f"Response to long query: {response}")
-        self.assertIn("theory", response.lower(), "Response should reference key concepts from the query.")
-        self.assertGreater(len(response), 0, "Response should not be empty for long queries.")
+        try:
+            response = main(query, self.cache)
+            logger.info(f"Response to long query: {response}")
+            self.assertIn("theory", response.lower(), "Response should reference key concepts from the query.")
+            self.assertGreater(len(response), 0, "Response should not be empty for long queries.")
+        except Exception as e:
+            logger.error(f"Test failed with exception: {str(e)}")
+            self.fail(f"Test encountered an exception: {str(e)}")
 
     def test_query_with_database_retrieval(self):
         """
         Test that the controller can retrieve and reference files from the database in the response.
         """
         query = "Tell me about the project files."
-        response = main(query, self.cache)
-        logger.info(f"Response to database retrieval query: {response}")
-        self.assertIn("file", response.lower(), "The response should reference files from the database.")
-        self.assertGreater(len(response), 0, "Response should not be empty when querying the database.")
+        try:
+            response = main(query, self.cache)
+            logger.info(f"Response to database retrieval query: {response}")
+            self.assertIn("file", response.lower(), "The response should reference files from the database.")
+            self.assertGreater(len(response), 0, "Response should not be empty when querying the database.")
+        except Exception as e:
+            logger.error(f"Test failed with exception: {str(e)}")
+            self.fail(f"Test encountered an exception: {str(e)}")
 
 if __name__ == "__main__":
     unittest.main()
