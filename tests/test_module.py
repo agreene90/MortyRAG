@@ -115,5 +115,27 @@ class TestController(unittest.TestCase):
             logger.error(f"Test failed with exception: {str(e)}")
             self.fail(f"Test encountered an exception: {str(e)}")
 
+    def test_query_with_mixed_content(self):
+        """
+        Test how the controller handles a query with mixed content types (text, numbers, special characters).
+        """
+        query = "Quantum computing in 2024! Explain."
+        try:
+            response = main(query, self.cache)
+            logger.info(f"Response to mixed content query: {response}")
+            self.assertIn("quantum", response.lower(), "Response should mention 'quantum' when asked about quantum computing.")
+            self.assertGreater(len(response), 0, "Response should not be empty for mixed content queries.")
+        except Exception as e:
+            logger.error(f"Test failed with exception: {str(e)}")
+            self.fail(f"Test encountered an exception: {str(e)}")
+
+    def test_query_with_unexpected_input(self):
+        """
+        Test how the controller handles unexpected input types.
+        """
+        query = None  # Passing None as a query
+        with self.assertRaises(ValueError):
+            main(query, self.cache)
+
 if __name__ == "__main__":
     unittest.main()
