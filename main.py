@@ -25,21 +25,23 @@ database_path = os.path.join(files_folder_path, 'resources', 'project_files.db')
 def fetch_files_from_database(query):
     """
     Fetch files from the SQLite database based on a query.
-    
+
     Args:
     - query (str): The search query to filter files in the database.
-    
+
     Returns:
     - List of tuples containing file metadata and content.
     """
     try:
-        logger.info(f"Fetching files from the database for query: {query}")
+        logger.info(f"Fetching files from the database for query: '{query}'")
         conn = sqlite3.connect(database_path)
         cursor = conn.cursor()
-        
-        cursor.execute("SELECT filename, content FROM project_files WHERE content LIKE ?", ('%' + query + '%',))
+
+        # Sanitized query to prevent SQL injection
+        sanitized_query = f"%{query.replace('%', '%%')}%"
+        cursor.execute("SELECT filename, content FROM project_files WHERE content LIKE ?", (sanitized_query,))
         files = cursor.fetchall()
-        
+
         conn.close()
         logger.info(f"Retrieved {len(files)} files from the database.")
         return files
@@ -50,15 +52,15 @@ def fetch_files_from_database(query):
 def fetch_files_from_raw(query):
     """
     Fetch files from the raw text directory if no database entries are found.
-    
+
     Args:
     - query (str): The search query to filter files in the raw folder.
-    
+
     Returns:
     - List of tuples containing file metadata and content.
     """
     try:
-        logger.info(f"Fetching files from the raw directory for query: {query}")
+        logger.info(f"Fetching files from the raw directory for query: '{query}'")
         documents, filenames = load_documents(raw_folder_path)
         processed_docs = preprocess_documents(documents)
         retrieved_docs = [(filenames[i], processed_docs[i]) for i in range(len(processed_docs)) if query.lower() in processed_docs[i].lower()]
@@ -73,34 +75,44 @@ def generate():
     """
     Endpoint to generate a response from the RAG system.
     """
-    data = request.get_json()
-    query = data.get('query', '')
-    
-    if not query:
-        logger.warning("No query provided in the request.")
-        return jsonify({"error": "Query not provided"}), 400
-    
-    # Fetch relevant files from the database based on the query
-    retrieved_docs = fetch_files_from_database(query)
-    
-    if not retrieved_docs:
-        # If no relevant documents are found in the database, fallback to raw files
-        retrieved_docs = fetch_files_from_raw(query)
-        
+    try:
+        data = request.get_json()
+
+        if not data or 'query' not in data:
+            logger.warning("No query provided in the request.")
+            return jsonify({"error": "Query not provided"}), 400
+
+        query = data['query'].strip()
+
+        if not query:
+            logger.warning("Received an empty query.")
+            return jsonify({"error": "Query cannot be empty"}), 400
+
+        # Fetch relevant files from the database based on the query
+        retrieved_docs = fetch_files_from_database(query)
+
         if not retrieved_docs:
-            logger.warning("No relevant documents found for the query.")
-            return jsonify({"error": "No relevant documents found"}), 404
-    
-    # Generate response using the RAG system
-    response = rag_main(query, retrieved_docs)
-    
-    # Convert the response to speech
-    logger.info("Converting generated response to speech.")
-    tts_engine.say(response)
-    tts_engine.runAndWait()
-    
-    logger.info("Response generated and sent successfully.")
-    return jsonify({"response": response})
+            # If no relevant documents are found in the database, fallback to raw files
+            retrieved_docs = fetch_files_from_raw(query)
+
+            if not retrieved_docs:
+                logger.warning("No relevant documents found for the query.")
+                return jsonify({"error": "No relevant documents found"}), 404
+
+        # Generate response using the RAG system
+        response = rag_main(query, retrieved_docs)
+
+        # Convert the response to speech
+        logger.info("Converting generated response to speech.")
+        tts_engine.say(response)
+        tts_engine.runAndWait()
+
+        logger.info("Response generated and sent successfully.")
+        return jsonify({"response": response})
+
+    except Exception as e:
+        logger.error(f"An error occurred while processing the request: {str(e)}")
+        return jsonify({"error": "An error occurred while processing your request."}), 500
 
 def create_app():
     """
@@ -109,5 +121,8 @@ def create_app():
     return app
 
 if __name__ == "__main__":
-    logger.info("Starting Flask server...")
-    app.run(host='0.0.0.0', port=5000)
+    try:
+        logger.info("Starting Flask server...")
+        app.run(host='0.0.0.0', port=5000)
+    except Exception as e:
+        logger.error(f"Failed to start Flask server: {str(e)}")
