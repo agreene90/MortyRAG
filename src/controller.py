@@ -1,9 +1,9 @@
+import os
+import logging
 from data_ingestion import preprocess_documents
 from knowledge_base import load_knowledge_base
 from retrieval import retrieve_documents
 from generation import ResponseGenerator
-import os
-import logging
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -34,6 +34,19 @@ def load_cached_model(data_directory="./data/processed"):
         logger.error(f"Unexpected error while loading knowledge base: {str(e)}")
         raise RuntimeError("An unexpected error occurred while loading the knowledge base.") from e
 
+def ensure_cache(cache):
+    """
+    Ensure the cache is populated with the necessary components.
+    
+    Parameters:
+    - cache: A dictionary to hold cached model components.
+    """
+    if not all(cache.get(key) for key in ('vectorizer', 'svd', 'vectors', 'filenames')):
+        logger.info("Cache is empty or incomplete, loading knowledge base...")
+        cache['vectorizer'], cache['svd'], cache['vectors'], cache['filenames'] = load_cached_model()
+    else:
+        logger.info("Cache is complete, using cached components.")
+
 def main(query, cache):
     """
     Main function that processes the query and generates a response using cached models.
@@ -46,11 +59,9 @@ def main(query, cache):
     - response: The generated response based on the query.
     """
     try:
-        # Ensure the cache is populated with the necessary components
-        if not all(cache.get(key) for key in ('vectorizer', 'svd', 'vectors', 'filenames')):
-            logger.info("Cache is empty or incomplete, loading knowledge base...")
-            cache['vectorizer'], cache['svd'], cache['vectors'], cache['filenames'] = load_cached_model()
-        
+        # Ensure the cache is populated
+        ensure_cache(cache)
+
         # Validate the query
         if not query.strip():
             raise ValueError("The query string is empty.")
@@ -59,6 +70,10 @@ def main(query, cache):
         logger.info(f"Retrieving documents for query: '{query}'")
         retrieved_docs = retrieve_documents(query, cache['vectorizer'], cache['svd'], cache['vectors'], cache['filenames'])
         
+        if not retrieved_docs:
+            logger.warning("No documents retrieved; check query or knowledge base.")
+            return "No relevant documents found to generate a response."
+
         # Instantiate the ResponseGenerator
         generator = ResponseGenerator()
 
@@ -92,6 +107,7 @@ if __name__ == "__main__":
         }
         
         # Generate the response using the main function
+        logger.info("Starting the response generation process...")
         response = main(query, model_cache)
         
         # Output the generated response
