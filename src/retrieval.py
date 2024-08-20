@@ -1,97 +1,134 @@
-import numpy as np
 import logging
-from sklearn.metrics.pairwise import cosine_similarity
-from knowledge_base import load_knowledge_base
+from pathlib import Path
+import PyPDF2
+import docx
+import csv
+import json
+import zipfile
+import pytesseract
+from PIL import Image
 
-# Setup logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def retrieve_documents(query, vectorizer, svd, vectors, filenames, top_k=5, normalize=True):
-    """
-    Retrieve the top-k documents most similar to the query.
-    
-    Parameters:
-    - query: The input query string.
-    - vectorizer: The vectorizer used to transform the query.
-    - svd: The dimensionality reduction model (e.g., SVD).
-    - vectors: The matrix of document vectors.
-    - filenames: List of filenames corresponding to the document vectors.
-    - top_k: Number of top documents to retrieve (default is 5).
-    - normalize: Whether to normalize similarity scores (default is True).
-    
-    Returns:
-    - A list of tuples with the top-k filenames and their corresponding similarity scores.
-    """
-    if not query.strip():
-        raise ValueError("The query string is empty.")
-    
+def read_local_file(file_path: Path) -> str:
+    """Read content from a file, determining the appropriate method based on the file type."""
     try:
-        logger.info("Transforming the query into vector space...")
-        query_vec = vectorizer.transform([query])
+        if not file_path.exists() or not file_path.is_file():
+            raise FileNotFoundError(f"File {file_path} does not exist or is not a file.")
         
-        if svd is not None:
-            if query_vec.shape[1] != svd.components_.shape[1]:
-                raise ValueError("SVD model and vectorizer output dimensions do not match.")
-            reduced_query_vec = svd.transform(query_vec)
-        else:
-            logger.warning("SVD model is not provided; skipping dimensionality reduction.")
-            reduced_query_vec = query_vec
-        
-        logger.info("Computing cosine similarities...")
-        similarities = cosine_similarity(reduced_query_vec, vectors).flatten()
-        
-        if similarities.size == 0:
-            logger.warning("No similarities were computed, returning an empty result.")
-            return []
-        
-        if normalize:
-            if np.allclose(similarities, similarities[0]):
-                logger.warning("All similarity scores are nearly identical; skipping normalization.")
-            else:
-                similarities = (similarities - np.min(similarities)) / (np.max(similarities) - np.min(similarities))
-        
-        logger.info("Ranking documents based on similarity scores...")
-        ranked_indices = np.argsort(similarities)[-top_k:][::-1]
-        
-        retrieved_docs = [(filenames[i], similarities[i]) for i in ranked_indices if similarities[i] > 0]
-        
-        if not retrieved_docs:
-            logger.warning("No documents with non-zero similarity scores were found.")
-        
-        logger.info(f"Retrieved top {len(retrieved_docs)} documents successfully.")
-        return retrieved_docs
-    
-    except ValueError as ve:
-        logger.error(f"Value error during document retrieval: {str(ve)}")
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error during document retrieval: {str(e)}")
-        raise
+        file_readers = {
+            '.pdf': read_pdf_file,
+            '.docx': read_docx_file,
+            '.csv': read_csv_file,
+            '.json': read_json_file,
+            '.zip': read_zip_file,
+            '.png': read_image_file,
+            '.jpg': read_image_file,
+            '.jpeg': read_image_file,
+            '.tiff': read_image_file,
+            '.txt': read_text_file,
+            '.md': read_text_file
+        }
 
-if __name__ == "__main__":
-    try:
-        queries = [
-            "Explain quantum computing and its applications.",
-            "Discuss the history of the Roman Empire."
-        ]
-        
-        logger.info("Loading knowledge base...")
-        vectorizer, svd, vectors, filenames = load_knowledge_base("./data/processed")
-        
-        if not vectors.size or not filenames:
-            logger.error("Knowledge base appears to be empty or improperly loaded.")
+        suffix = file_path.suffix.lower()
+        if suffix in file_readers:
+            return file_readers[suffix](file_path)
         else:
-            for query in queries:
-                logger.info(f"Retrieving documents for query: '{query}'")
-                retrieved_docs = retrieve_documents(query, vectorizer, svd, vectors, filenames, top_k=5)
-                
-                if retrieved_docs:
-                    print(f"\nTop retrieved documents for query '{query}':")
-                    for doc in retrieved_docs:
-                        print(f"Document: {doc[0]}, Similarity: {doc[1]:.4f}")
-                else:
-                    print(f"No relevant documents found for query '{query}'.")
-    
+            logger.warning(f"Unsupported file type: {suffix}. Returning empty content.")
+            return ""
+
     except Exception as e:
-        logger.error(f"An error occurred in the retrieval process: {str(e)}")
+        logger.error(f"Error reading file {file_path}: {e}")
+        return ""
+
+def read_pdf_file(file_path: Path) -> str:
+    """Extract text from a PDF file."""
+    try:
+        with open(file_path, 'rb') as file:
+            reader = PyPDF2.PdfReader(file)
+            content = "".join([page.extract_text() for page in reader.pages])
+        logger.info(f"Successfully extracted content from PDF {file_path}")
+        return content
+    except Exception as e:
+        logger.error(f"Failed to read PDF file {file_path}: {e}")
+        return ""
+
+def read_docx_file(file_path: Path) -> str:
+    """Extract text from a DOCX file."""
+    try:
+        doc = docx.Document(file_path)
+        content = "\n".join([para.text for para in doc.paragraphs])
+        logger.info(f"Successfully extracted content from DOCX {file_path}")
+        return content
+    except Exception as e:
+        logger.error(f"Failed to read DOCX file {file_path}: {e}")
+        return ""
+
+def read_csv_file(file_path: Path) -> str:
+    """Extract text from a CSV file."""
+    try:
+        with file_path.open('r', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            content = "\n".join([", ".join(row) for row in reader])
+        logger.info(f"Successfully extracted content from CSV {file_path}")
+        return content
+    except Exception as e:
+        logger.error(f"Failed to read CSV file {file_path}: {e}")
+        return ""
+
+def read_json_file(file_path: Path) -> str:
+    """Extract content from a JSON file."""
+    try:
+        with file_path.open('r', encoding='utf-8') as file:
+            content = json.dumps(json.load(file), indent=4)
+        logger.info(f"Successfully extracted content from JSON {file_path}")
+        return content
+    except Exception as e:
+        logger.error(f"Failed to read JSON file {file_path}: {e}")
+        return ""
+
+def read_zip_file(file_path: Path) -> str:
+    """Extract and concatenate text content from files within a ZIP archive."""
+    try:
+        content = ""
+        with zipfile.ZipFile(file_path, 'r') as zip_ref:
+            for file_name in zip_ref.namelist():
+                with zip_ref.open(file_name) as file:
+                    content += f"\nFile: {file_name}\n" + file.read().decode('utf-8')
+        logger.info(f"Successfully extracted content from ZIP {file_path}")
+        return content
+    except Exception as e:
+        logger.error(f"Failed to read ZIP file {file_path}: {e}")
+        return ""
+
+def read_image_file(file_path: Path) -> str:
+    """Extract text from an image file using OCR."""
+    try:
+        image = Image.open(file_path)
+        content = pytesseract.image_to_string(image)
+        logger.info(f"Successfully extracted text from image {file_path}")
+        return content
+    except Exception as e:
+        logger.error(f"Failed to read image file {file_path}: {e}")
+        return ""
+
+def read_text_file(file_path: Path) -> str:
+    """Read content from a plain text or markdown file."""
+    try:
+        with file_path.open('r', encoding='utf-8') as file:
+            content = file.read()
+        logger.info(f"Successfully read content from text file {file_path}")
+        return content
+    except Exception as e:
+        logger.error(f"Failed to read text file {file_path}: {e}")
+        return ""
+
+def ensure_dir(directory: Path):
+    """Ensure that a directory exists; create it if it doesn't."""
+    try:
+        if not directory.exists():
+            directory.mkdir(parents=True, exist_ok=True)
+            logger.info(f"Created directory: {directory}")
+    except Exception as e:
+        logger.critical(f"Failed to create directory {directory}: {e}")
+        raise
