@@ -38,11 +38,13 @@ jobs:
         path: dist/MortyRAG
 
     - name: Create a Git Tag
+      id: create_tag  # Assign an ID to this step to reference later
       run: |
         git config --local user.name "GitHub Actions"
         git config --local user.email "actions@github.com"
         git tag v$(date +'%Y.%m.%d.%H%M%S')
         git push origin --tags
+        echo "::set-output name=tag_name::v$(date +'%Y.%m.%d.%H%M%S')"  # Output the tag name for later use
 
   release:
     runs-on: ubuntu-latest
@@ -56,6 +58,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: dist/MortyRAG
+        tag_name: ${{ steps.create_tag.outputs.tag_name }}  # Reference the tag created in the build step
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
