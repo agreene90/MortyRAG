@@ -1,32 +1,33 @@
-# Use an official Python runtime as a parent image
-FROM python:3.10-slim
+# Stage 1: Build environment
+FROM python:3.10 as build-env
 
-# Install dependencies and necessary tools for running Tkinter GUI in Docker
-RUN apt-get update && apt-get install -y \
-    python3-tk \
-    x11-apps \
-    xvfb \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
-ENV DISPLAY=:99
-
-# Set the working directory in the container
+# Set working directory
 WORKDIR /app
 
-# Copy the requirements file into the container
+# Copy the requirements file
 COPY requirements.txt .
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --upgrade pip && \
-    pip install -r requirements.txt
+# Install dependencies (including transformers and other heavy packages)
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the current directory contents into the container at /app
-COPY . /app
+# Download and cache necessary Hugging Face models
+RUN python -c "from transformers import T5Tokenizer, T5ForConditionalGeneration; T5Tokenizer.from_pretrained('t5-base'); T5ForConditionalGeneration.from_pretrained('t5-base')"
 
-# Expose the port your app might run on
-EXPOSE 5000
+# Copy the rest of the application code
+COPY . .
 
-# Command to start Xvfb and run the application
-CMD ["sh", "-c", "Xvfb :99 -screen 0 1024x768x16 & python3 main.py"]
+# Clean up unnecessary files
+RUN rm -rf /root/.cache/pip
+
+# Stage 2: Final image
+FROM python:3.10-slim
+
+# Set working directory
+WORKDIR /app
+
+# Copy the dependencies and installed packages from the build environment
+COPY --from=build-env /usr/local/lib/python3.10 /usr/local/lib/python3.10
+COPY --from=build-env /app /app
+
+# Command to run the application
+CMD ["python", "main.py"]
