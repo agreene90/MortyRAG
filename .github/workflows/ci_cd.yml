@@ -1,4 +1,4 @@
-name: Build MortyRAG Docker Image, Save as Artifact, and Create Installer
+name: Build MortyRAG Docker Image, Save as Artifact, and Create Shortcut Script
 
 on:
   push:
@@ -38,9 +38,16 @@ jobs:
       run: |
         docker save ghcr.io/agreene90/mortyrag:latest -o mortyrag.tar
 
-    - name: Create Installer Script
+    - name: Upload Docker image artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: mortyrag-docker-image
+        path: mortyrag.tar
+        retention-days: 5  # Optionally specify how long to keep the artifacts
+
+    - name: Create Shortcut Script
       run: |
-        cat << 'EOF' > MortRAG.sh
+        cat << 'EOF' > create_shortcut.sh
         #!/bin/bash
         set -e
 
@@ -66,31 +73,23 @@ jobs:
         echo "Version=1.0" >> "$DESKTOP_ENTRY"
         echo "Name=MortyRAG" >> "$DESKTOP_ENTRY"
         echo "Comment=Start MortyRAG Docker Container" >> "$DESKTOP_ENTRY"
-        echo "Exec=docker run -it --rm -p 8081:8081 ghcr.io/agreene90/mortyrag:latest" >> "$DESKTOP_ENTRY"
+        echo "Exec=docker run -it --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ghcr.io/agreene90/mortyrag:latest" >> "$DESKTOP_ENTRY"
         echo "Icon=docker" >> "$DESKTOP_ENTRY"
-        echo "Terminal=true" >> "$DESKTOP_ENTRY"
+        echo "Terminal=false" >> "$DESKTOP_ENTRY"
         echo "Type=Application" >> "$DESKTOP_ENTRY"
         echo "Categories=Development;" >> "$DESKTOP_ENTRY"
         echo "StartupNotify=true" >> "$DESKTOP_ENTRY"
-        
+
         # Create a symlink to the user's desktop
         ln -s "$DESKTOP_ENTRY" "$HOME/Desktop/MortyRAG.desktop"
         chmod +x "$HOME/Desktop/MortyRAG.desktop"
 
         echo "MortyRAG has been successfully installed and a shortcut has been added to your desktop."
-
         EOF
 
-    - name: Upload Docker image artifact
+    - name: Upload Shortcut Script
       uses: actions/upload-artifact@v3
       with:
-        name: mortyrag-docker-image
-        path: mortyrag.tar
-        retention-days: 5  # Optionally specify how long to keep the artifacts
-
-    - name: Upload Installer Script
-      uses: actions/upload-artifact@v3
-      with:
-        name: install-script
-        path: MortRAG.sh
+        name: create_shortcut_script
+        path: create_shortcut.sh
         retention-days: 5  # Optionally specify how long to keep the artifacts
