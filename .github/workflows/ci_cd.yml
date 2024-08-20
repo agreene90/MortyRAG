@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
@@ -29,7 +29,7 @@ jobs:
         mkdir -p data/processed
         if [ ! -f "data/processed/vectorizer_v1.pkl" ]; then
           echo "Knowledge base binaries not found. Running setup script..."
-          python src/data_ingestion.py  # Run your data ingestion or setup script here
+          python src/data_ingestion.py  # Replace with your setup script if different
         else
           echo "Knowledge base binaries found. Skipping setup."
         fi
@@ -71,3 +71,27 @@ jobs:
       with:
         name: your-executable
         path: dist/your_executable_name
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install SSH key
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Deploy application
+      run: |
+        scp dist/your_executable_name user@your-server:/path/to/deploy/
+        ssh user@your-server 'sudo systemctl restart your-service'
+
+    - name: Notify of deployment success
+      run: echo "Deployment to the server was successful!"
