@@ -39,11 +39,11 @@ MortyRAG-main/
 ├── LICENSE
 ├── README.md
 ├── Screenshot from 2024-08-19 23-18-01.png
-├── generator.py
-├── main.py            # Entry point script
-├── rag.py
-├── requirements.txt
-└── retriever.py
+├── generator.py         # Custom T5 model class for RAG with local file support
+├── main.py              # Entry point script for the Optimization and Query handling GUI
+├── rag.py               # Core logic for generating responses using the T5 model
+├── requirements.txt     # Required Python packages
+└── retriever.py         # Functions for reading and processing different file types
 ```
 
 ## Installation
@@ -68,87 +68,65 @@ Pillow
 pyinstaller
 ```
 
-These packages cover all necessary functionalities, including numerical operations, machine learning, API serving, testing, and text-to-speech.
+These packages cover all necessary functionalities, including GUI, machine learning, file processing, and packaging the application.
 
 ## Usage
 
-### 1. Data Ingestion
+### 1. Running the GUI Application
 
-Before running the model, you need to prepare the knowledge base by processing the raw text data:
+The main interface for interacting with the RAG model and performing optimizations is provided by the `main.py` script, which launches a user-friendly Tkinter-based GUI.
 
-```bash
-python src/data_ingestion.py
-```
-
-Ensure that your raw text files are located in the `data/raw/` directory. This script will preprocess the text data, vectorize it, and store the processed data in the `data/processed/` directory.
-
-### 2. Creating the SQLite Database
-
-If your project relies on document retrieval from a database, you need to create the SQLite database from your project files:
+To start the application, simply run:
 
 ```bash
-python src/create_file_database.py
+python main.py
 ```
 
-This script will scan the `data/files/` directory, extract file metadata and content, and store it in an SQLite database located in `data/files/resources/project_files.db`.
+### 2. Script Functionalities
 
-### 3. Running the Application with Gunicorn
+#### `main.py`
+- **Purpose**: Serves as the entry point for the Tkinter-based GUI, allowing users to perform optimization tasks and query handling through a simple interface.
+- **Features**:
+  - **Optimization Mode**: Runs iterative optimization to find the best possible response for a given query.
+  - **Query Mode**: Handles single queries and returns an immediate response.
+  - **File Integration**: Optionally includes local file contents as part of the query context.
+  - **GUI Components**: Provides a polished, user-friendly interface with tooltips, placeholders, and progress indicators.
 
-For production environments, it is recommended to use Gunicorn as your WSGI server. The system is already configured for this using the provided Docker setup:
+#### `generator.py`
+- **Purpose**: Defines the `T5RAGWithLocalFiles` class, which integrates the T5 model with local file data for enhanced text generation.
+- **Features**:
+  - Extends `T5ForConditionalGeneration` to support additional context from local files.
+  - Supports configuration of generation parameters such as maximum length, temperature, and sampling.
 
-#### **Using Docker:**
+#### `rag.py`
+- **Purpose**: Implements the core logic for generating responses using the T5 model.
+- **Features**:
+  - Handles text generation using the T5 model with support for local file integration.
+  - Provides functions to generate answers, manage model loading/saving, and handle query processing.
 
-1. **Build the Docker Image**:
-   ```bash
-   docker build -t your-rag-system .
-   ```
+#### `retriever.py`
+- **Purpose**: Provides utilities for reading and processing content from various file formats.
+- **Features**:
+  - Supports reading from PDF, DOCX, CSV, JSON, ZIP, and image files.
+  - Extracts text using appropriate methods (e.g., OCR for images, PyPDF2 for PDFs).
 
-2. **Run the Docker Container**:
-   ```bash
-   docker run -d -p 5000:5000 --name rag-system your-rag-system
-   ```
+### Example Usage
 
-   - The entrypoint script `entrypoint.sh` will handle database initialization and start the Gunicorn server.
-   - The server will start on `http://0.0.0.0:5000/`. You can send POST requests to the `/generate` endpoint with a JSON payload containing the `query` parameter.
+After launching the GUI with `main.py`, you can:
+- **Enter a query**: Type your question in the query input field.
+- **Select a mode**: Choose between Optimization Mode or Query Mode.
+- **(Optional) Specify a file path**: If you have a relevant document, provide its path to include its content in the context.
+- **Start the process**: Click the "Start" button to run the query or optimization task.
 
-#### **Without Docker (Manual Setup):**
+### 3. Packaging the Application
+
+You can package the application into an executable using PyInstaller. Run the following command:
 
 ```bash
-gunicorn --workers 3 --bind 0.0.0.0:5000 main:create_app
+pyinstaller --onefile --noconsole main.py
 ```
 
-- `--workers 3`: Specifies the number of worker processes for handling requests. Adjust based on your server's CPU cores.
-- `--bind 0.0.0.0:5000`: Binds the server to all available IP addresses on port 5000.
-
-### Example Request
-
-```json
-{
-  "query": "Explain quantum mechanics in simple terms."
-}
-```
-
-### Example Response
-
-```json
-{
-  "response": "Quantum mechanics is the branch of physics that deals with the behavior of particles on a very small scale."
-}
-```
-
-### 4. Text-to-Speech Functionality
-
-Your system includes text-to-speech conversion for the generated responses. The speech output will be handled by the `pyttsx3` library, which operates locally without the need for an internet connection.
-
-### 5. Testing
-
-You can run the unit tests to ensure everything is working correctly:
-
-```bash
-python -m unittest discover -s tests
-```
-
-This command will automatically discover and run all the test modules in the `tests/` directory.
+This will generate a standalone executable for your application, which can be distributed without requiring users to install Python.
 
 ## Documentation
 
