@@ -1,4 +1,4 @@
-name: Build MortyRAG Executable
+name: Build and Run Docker Container
 
 on:
   push:
@@ -16,26 +16,24 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up Python environment
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
 
-    - name: Install dependencies
+    - name: Build Docker image
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pyinstaller
+        docker build -t mortyrag .
 
-    - name: Build executable with PyInstaller
+    - name: Run Docker container
       run: |
-        pyinstaller --onefile --windowed --name MortyRAG main.py \
-        --add-data "data/raw:./data/raw" \
-        --hidden-import "tkinter"
+        docker run -d -p 5000:5000 mortyrag
 
-    - name: Upload Build Artifacts
+    - name: Save Docker image as artifact
       uses: actions/upload-artifact@v3
       with:
-        name: mortyrag-executable
-        path: dist/MortyRAG
-        retention-days: 5  # Optionally specify how long to keep the artifacts
+        name: mortyrag-image
+        path: |
+          ./mortyrag.tar
+
+    - name: Save Docker image to tar file
+      run: |
+        docker save mortyrag -o mortyrag.tar
