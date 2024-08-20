@@ -1,7 +1,6 @@
 import os
 import logging
 from data_ingestion import preprocess_documents
-from knowledge_base import load_knowledge_base
 from retrieval import retrieve_documents
 from generation import ResponseGenerator
 
@@ -24,7 +23,8 @@ def load_cached_model(data_directory="./data/processed"):
     """
     try:
         logger.info(f"Loading knowledge base from directory: {data_directory}")
-        vectorizer, svd, vectors, filenames = load_knowledge_base(data_directory)
+        # Assume that preprocess_documents returns the necessary components directly
+        vectorizer, svd, vectors, filenames = preprocess_documents(data_directory)
         logger.info("Knowledge base loaded successfully.")
         return vectorizer, svd, vectors, filenames
     except FileNotFoundError as e:
