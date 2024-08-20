@@ -1,4 +1,4 @@
-# mortyRAG
+# MortyRAG
 
 ## Overview
 
@@ -43,90 +43,71 @@ MortyRAG-main/
 ├── main.py              # Entry point script for the Optimization and Query handling GUI
 ├── rag.py               # Core logic for generating responses using the T5 model
 ├── requirements.txt     # Required Python packages
-└── retriever.py         # Functions for reading and processing different file types
+├── retriever.py         # Functions for reading and processing different file types
+├── Dockerfile           # Dockerfile to build the Docker image for MortyRAG
+└── create_shortcut.sh   # Script to create a desktop shortcut to run the Docker container
 ```
 
 ## Installation
 
-To get started, clone the repository and install the necessary dependencies:
+### Using Docker
+
+MortyRAG is now available as a Docker container, making it easy to deploy and run the application across different environments without needing to install dependencies manually.
+
+### 1. Pull the Docker Image
+
+First, pull the latest Docker image from the GitHub Container Registry:
 
 ```bash
-git clone https://github.com/HermiTech-LLC/MortyRAG.git
-cd MortyRAG-main
-pip install -r requirements.txt
+docker pull ghcr.io/agreene90/mortyrag:latest
 ```
 
-### Requirements
+### 2. Running the Docker Container
 
-Ensure your `requirements.txt` includes the following dependencies:
-
-```plaintext
-tkintertable
-transformers
-torch
-Pillow
-pyinstaller
-```
-
-These packages cover all necessary functionalities, including GUI, machine learning, file processing, and packaging the application.
-
-## Usage
-
-### 1. Running the GUI Application
-
-The main interface for interacting with the RAG model and performing optimizations is provided by the `main.py` script, which launches a user-friendly Tkinter-based GUI.
-
-To start the application, simply run:
+To run the MortyRAG application using Docker, execute the following command:
 
 ```bash
-python main.py
+docker run -it --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ghcr.io/agreene90/mortyrag:latest
 ```
 
-### 2. Script Functionalities
+This command will launch the MortyRAG Tkinter-based GUI in a Docker container with support for displaying the graphical interface on your local machine.
 
-#### `main.py`
-- **Purpose**: Serves as the entry point for the Tkinter-based GUI, allowing users to perform optimization tasks and query handling through a simple interface.
-- **Features**:
-  - **Optimization Mode**: Runs iterative optimization to find the best possible response for a given query.
-  - **Query Mode**: Handles single queries and returns an immediate response.
-  - **File Integration**: Optionally includes local file contents as part of the query context.
-  - **GUI Components**: Provides a polished, user-friendly interface with tooltips, placeholders, and progress indicators.
+### 3. Creating a Desktop Shortcut for Easy Access
 
-#### `generator.py`
-- **Purpose**: Defines the `T5RAGWithLocalFiles` class, which integrates the T5 model with local file data for enhanced text generation.
-- **Features**:
-  - Extends `T5ForConditionalGeneration` to support additional context from local files.
-  - Supports configuration of generation parameters such as maximum length, temperature, and sampling.
+You can create a desktop shortcut to run the Dockerized MortyRAG application directly from your desktop.
 
-#### `rag.py`
-- **Purpose**: Implements the core logic for generating responses using the T5 model.
-- **Features**:
-  - Handles text generation using the T5 model with support for local file integration.
-  - Provides functions to generate answers, manage model loading/saving, and handle query processing.
+#### **Creating the Shortcut Script**
 
-#### `retriever.py`
-- **Purpose**: Provides utilities for reading and processing content from various file formats.
-- **Features**:
-  - Supports reading from PDF, DOCX, CSV, JSON, ZIP, and image files.
-  - Extracts text using appropriate methods (e.g., OCR for images, PyPDF2 for PDFs).
-
-### Example Usage
-
-After launching the GUI with `main.py`, you can:
-- **Enter a query**: Type your question in the query input field.
-- **Select a mode**: Choose between Optimization Mode or Query Mode.
-- **(Optional) Specify a file path**: If you have a relevant document, provide its path to include its content in the context.
-- **Start the process**: Click the "Start" button to run the query or optimization task.
-
-### 3. Packaging the Application
-
-You can package the application into an executable using PyInstaller. Run the following command:
+If you prefer to automate this process, you can run a script that creates the shortcut:
 
 ```bash
-pyinstaller --onefile --noconsole main.py
-```
+cat << 'EOF' > create_shortcut.sh
+#!/bin/bash
+set -e
 
-This will generate a standalone executable for your application, which can be distributed without requiring users to install Python.
+# Pull the latest Docker image
+docker pull ghcr.io/agreene90/mortyrag:latest
+
+# Create Desktop Entry for all users
+DESKTOP_ENTRY="/usr/share/applications/MortyRAG.desktop"
+echo "[Desktop Entry]" > "$DESKTOP_ENTRY"
+echo "Version=1.0" >> "$DESKTOP_ENTRY"
+echo "Name=MortyRAG" >> "$DESKTOP_ENTRY"
+echo "Comment=Start MortyRAG Docker Container" >> "$DESKTOP_ENTRY"
+echo "Exec=docker run -it --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ghcr.io/agreene90/mortyrag:latest" >> "$DESKTOP_ENTRY"
+echo "Icon=docker" >> "$DESKTOP_ENTRY"
+echo "Terminal=false" >> "$DESKTOP_ENTRY"
+echo "Type=Application" >> "$DESKTOP_ENTRY"
+echo "Categories=Development;" >> "$DESKTOP_ENTRY"
+echo "StartupNotify=true" >> "$DESKTOP_ENTRY"
+
+# Create a symlink to the user's desktop
+ln -s "$DESKTOP_ENTRY" "$HOME/Desktop/MortyRAG.desktop"
+chmod +x "$HOME/Desktop/MortyRAG.desktop"
+
+echo "MortyRAG has been successfully installed and a shortcut has been added to your desktop."
+EOF
+```
 
 ## Documentation
 
