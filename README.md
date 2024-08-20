@@ -1,5 +1,16 @@
 # MortyRAG
+```
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/agreene90/MortyRAG/ci_cd.yml?branch=main&label=Build%20Status)
+![Docker Pulls](https://img.shields.io/docker/pulls/agreene90/mortyrag)
+![Docker Image Size](https://img.shields.io/docker/image-size/agreene90/mortyrag/latest)
+![GitHub issues](https://img.shields.io/github/issues/agreene90/MortyRAG)
+![GitHub forks](https://img.shields.io/github/forks/agreene90/MortyRAG)
+![GitHub stars](https://img.shields.io/github/stars/agreene90/MortyRAG)
+![GitHub license](https://img.shields.io/github/license/agreene90/MortyRAG)
+![Maintenance](https://img.shields.io/maintenance/yes/2024)
+![Last Commit](https://img.shields.io/github/last-commit/agreene90/MortyRAG)
 
+```
 ## Overview
 
 This project, developed by Ant under HermiTech-LLC, implements a Retrieval-Augmented Generation (RAG) model that combines a document retrieval mechanism with a generative language model. The system is designed to produce witty, informative, and contextually appropriate responses, with a particular focus on physics-related content.
