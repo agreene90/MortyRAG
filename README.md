@@ -1,14 +1,14 @@
 # MortyRAG
 
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/agreene90/MortyRAG/ci_cd.yml?branch=main&label=Build%20Status)](https://github.com/agreene90/MortyRAG/actions)
-[![Docker Pulls](https://img.shields.io/docker/pulls/ghcr.io/agreene90/mortyrag)](https://ghcr.io/agreene90/mortyrag)
-[![Docker Image Size](https://img.shields.io/docker/image-size/ghcr.io/agreene90/mortyrag/latest)](https://ghcr.io/agreene90/mortyrag)
-[![GitHub Issues](https://img.shields.io/github/issues/agreene90/MortyRAG)](https://github.com/agreene90/MortyRAG/issues)
-[![GitHub Forks](https://img.shields.io/github/forks/agreene90/MortyRAG)](https://github.com/agreene90/MortyRAG/network/members)
-[![GitHub Stars](https://img.shields.io/github/stars/agreene90/MortyRAG)](https://github.com/agreene90/MortyRAG/stargazers)
-[![GitHub License](https://img.shields.io/github/license/agreene90/MortyRAG)](https://github.com/agreene90/MortyRAG/blob/main/LICENSE)
-[![Maintenance](https://img.shields.io/maintenance/yes/2024)](https://github.com/agreene90/MortyRAG)
-[![Last Commit](https://img.shields.io/github/last-commit/agreene90/MortyRAG)](https://github.com/agreene90/MortyRAG/commits/main)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/agreene90/MortyRAG/ci_cd.yml?branch=main&label=Build%20Status)
+![Docker Pulls](https://img.shields.io/docker/pulls/ghcr.io/agreene90/mortyrag)
+![Docker Image Size](https://img.shields.io/docker/image-size/ghcr.io/agreene90/mortyrag/latest)
+![GitHub issues](https://img.shields.io/github/issues/agreene90/MortyRAG)
+![GitHub forks](https://img.shields.io/github/forks/agreene90/MortyRAG)
+![GitHub stars](https://img.shields.io/github/stars/agreene90/MortyRAG)
+![GitHub license](https://img.shields.io/github/license/agreene90/MortyRAG)
+![Maintenance](https://img.shields.io/maintenance/yes/2024)
+![Last Commit](https://img.shields.io/github/last-commit/agreene90/MortyRAG)
 
 ## Overview
 
