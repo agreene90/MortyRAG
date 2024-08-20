@@ -1,20 +1,26 @@
-# Use an official Python runtime as a parent image
 FROM python:3.10-slim
 
-# Set the working directory in the container
+# Install necessary system dependencies for Tkinter
+RUN apt-get update && apt-get install -y \
+    python3-tk \
+    libx11-6 \
+    libxext6 \
+    libxrender1 \
+    libxtst6 \
+    libxi6 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set the working directory
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
+# Copy all files to the container
 COPY . /app
 
-# Install the required packages specified in requirements.txt
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Ensure that the Tkinter app uses the host's display
+# Expose the display port for GUI applications
 ENV DISPLAY=:0
 
-# Expose the port for forwarding if necessary (you can remove this if not needed)
-EXPOSE 8081
-
-# Run the main application (Tkinter app)
+# Run the Tkinter application
 CMD ["python", "main.py"]
