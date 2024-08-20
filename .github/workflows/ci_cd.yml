@@ -59,6 +59,13 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-artifacts
+        path: dist/MortyRAG
+        retention-days: 5  # Optionally specify how long to keep the artifacts
+
   # test:
   #   runs-on: ubuntu-latest
   #   needs: build
