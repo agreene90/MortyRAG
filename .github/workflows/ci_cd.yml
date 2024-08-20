@@ -19,20 +19,9 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
 
-    - name: Cache Docker layers
-      uses: actions/cache@v3
-      with:
-        path: /var/lib/docker
-        key: ${{ runner.os }}-docker-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-docker-
-
-    - name: Log in to GitHub Docker Registry
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
     - name: Build Docker image
       run: |
-        docker build -t ghcr.io/${{ github.repository_owner }}/mortyrag:latest .
+        docker build --progress=plain --compress -t ghcr.io/${{ github.repository_owner }}/mortyrag:latest .
 
     - name: Run Docker container
       run: |
@@ -40,7 +29,7 @@ jobs:
 
     - name: Save Docker image to tar file
       run: |
-        docker save ghcr.io/${{ github.repository_owner }}/mortyrag:latest -o mortyrag.tar
+        docker save --compress ghcr.io/${{ github.repository_owner }}/mortyrag:latest -o mortyrag.tar
 
     - name: Upload Docker image as artifact
       uses: actions/upload-artifact@v3
