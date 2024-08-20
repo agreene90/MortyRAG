@@ -2,7 +2,7 @@
 
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/agreene90/MortyRAG/ci_cd.yml?branch=main&label=Build%20Status)
 ![Docker Pulls](https://img.shields.io/docker/pulls/agreene90/mortyrag)
-![Docker Image Size](https://img.shields.io/docker/image-size/agreene90/mortyrag:latest)
+![Docker Image Size](https://img.shields.io/docker/image-size/agreene90/MortyRAG/releases/tag/v2024.08.20.154036)
 ![GitHub issues](https://img.shields.io/github/issues/agreene90/MortyRAG)
 ![GitHub forks](https://img.shields.io/github/forks/agreene90/MortyRAG)
 ![GitHub stars](https://img.shields.io/github/stars/agreene90/MortyRAG)
