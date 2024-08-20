@@ -1,12 +1,5 @@
-numpy
-scikit-learn
-scipy
-pandas
+tkintertable
 transformers
 torch
-flask
-joblib
-pickle-mixin
-gunicorn
-pytest
-pyttsx3
+Pillow
+pyinstaller
