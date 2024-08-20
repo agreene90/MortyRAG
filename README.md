@@ -12,6 +12,9 @@ ___
 
 ```plaintext
 MortyRAG-main/
+├── .github/workflows/           # GitHub Actions workflows
+│   └── ci_cd.yml                # CI/CD pipeline configuration
+├── custom_t5_rag_local_model_v1.0/
 ├── data/
 │   ├── raw/
 │   │   ├── 01_physics_with_wit_and_wisdom.txt
@@ -27,39 +30,20 @@ MortyRAG-main/
 │   │   ├── 11_rise_of_ai_fiction_vs_reality.txt
 │   │   ├── 12_exploring_alien_civilizations.txt
 │   │   └── 13_pop_culture_tech_influence.txt
-│   └── files/
-│       ├── documentation/
-│       ├── resources/
-│       │   └── project_files.db  # Database created by create_file_database.py
-│       └── logs/
 ├── docs/
 │   ├── api.md
 │   ├── controller.md
-│   ├── data_ingestion.md
 │   ├── generation.md
 │   ├── introduction.md
-│   ├── knowledge_base.md
 │   └── retrieval.md
-├── src/
-│   ├── api.py
-│   ├── controller.py
-│   ├── create_file_database.py
-│   ├── data_ingestion.py
-│   ├── generation.py
-│   ├── knowledge_base.py
-│   └── retrieval.py
-├── tests/
-│   ├── test_module.py
-│   ├── test_data_ingestion.py
-│   ├── test_knowledge_base.py
-│   └── test_generation.py
 ├── LICENSE
-├── Mortspeak.jpg
 ├── README.md
+├── Screenshot from 2024-08-19 23-18-01.png
+├── generator.py
+├── main.py            # Entry point script
+├── rag.py
 ├── requirements.txt
-├── main.py            # Entry point script for running the application
-├── Dockerfile         # Dockerfile for containerizing the application
-└── entrypoint.sh      # Entrypoint script for initializing the database and starting Gunicorn
+└── retriever.py
 ```
 
 ## Installation
