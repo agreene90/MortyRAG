@@ -61,18 +61,11 @@ pip install -r requirements.txt
 Ensure your `requirements.txt` includes the following dependencies:
 
 ```plaintext
-numpy
-scikit-learn
-scipy
-pandas
+tkintertable
 transformers
 torch
-flask
-joblib
-pickle-mixin
-gunicorn
-pytest
-pyttsx3
+Pillow
+pyinstaller
 ```
 
 These packages cover all necessary functionalities, including numerical operations, machine learning, API serving, testing, and text-to-speech.
