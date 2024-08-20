@@ -28,11 +28,14 @@ jobs:
 
     - name: Build Docker image
       run: |
-        docker build -t ghcr.io/agreene90/mortyrag:latest .
+        TAG_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+        docker build -t ghcr.io/agreene90/mortyrag:latest -t ghcr.io/agreene90/mortyrag:$TAG_SHA .
 
     - name: Push Docker image to GitHub Container Registry
       run: |
+        TAG_SHA=$(echo ${{ github.sha }} | cut -c1-7)
         docker push ghcr.io/agreene90/mortyrag:latest
+        docker push ghcr.io/agreene90/mortyrag:$TAG_SHA
 
     - name: Save Docker image as artifact
       run: |
@@ -50,7 +53,6 @@ jobs:
         cat << 'EOF' > create_shortcut.sh
         #!/bin/bash
         set -e
-
         # Load Docker image
         if [ -f "mortyrag.tar" ]; then
           echo "Loading Docker image..."
@@ -60,13 +62,11 @@ jobs:
           echo "Docker image not found!"
           exit 1
         fi
-
         # Ensure Docker is running
         if ! systemctl is-active --quiet docker; then
           echo "Docker is not running, starting Docker..."
           sudo systemctl start docker
         fi
-
         # Create Desktop Entry for all users
         DESKTOP_ENTRY="/usr/share/applications/MortyRAG.desktop"
         echo "[Desktop Entry]" > "$DESKTOP_ENTRY"
@@ -79,11 +79,9 @@ jobs:
         echo "Type=Application" >> "$DESKTOP_ENTRY"
         echo "Categories=Development;" >> "$DESKTOP_ENTRY"
         echo "StartupNotify=true" >> "$DESKTOP_ENTRY"
-
         # Create a symlink to the user's desktop
         ln -s "$DESKTOP_ENTRY" "$HOME/Desktop/MortyRAG.desktop"
         chmod +x "$HOME/Desktop/MortyRAG.desktop"
-
         echo "MortyRAG has been successfully installed and a shortcut has been added to your desktop."
         EOF
 
