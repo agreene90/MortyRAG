@@ -29,7 +29,9 @@ jobs:
 
     - name: Build executable with PyInstaller
       run: |
-        pyinstaller --onefile --windowed --name MortyRAG main.py
+        pyinstaller --onefile --windowed --name MortyRAG main.py \
+        --add-data "data/raw:./data/raw" \
+        --hidden-import "tkinter"
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v3
