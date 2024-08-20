@@ -1,10 +1,9 @@
 import os
-import sqlite3
+import logging
 from flask import Flask, request, jsonify
 from controller import main as rag_main
 from data_ingestion import load_documents, preprocess_documents
 import pyttsx3  # Text-to-Speech (TTS) library
-import logging
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -20,34 +19,6 @@ tts_engine = pyttsx3.init()
 base_dir = os.path.dirname(os.path.abspath(__file__))
 files_folder_path = os.path.join(base_dir, 'data', 'files')
 raw_folder_path = os.path.join(base_dir, 'data', 'raw')
-database_path = os.path.join(files_folder_path, 'resources', 'project_files.db')
-
-def fetch_files_from_database(query):
-    """
-    Fetch files from the SQLite database based on a query.
-
-    Args:
-    - query (str): The search query to filter files in the database.
-
-    Returns:
-    - List of tuples containing file metadata and content.
-    """
-    try:
-        logger.info(f"Fetching files from the database for query: '{query}'")
-        conn = sqlite3.connect(database_path)
-        cursor = conn.cursor()
-
-        # Sanitized query to prevent SQL injection
-        sanitized_query = f"%{query.replace('%', '%%')}%"
-        cursor.execute("SELECT filename, content FROM project_files WHERE content LIKE ?", (sanitized_query,))
-        files = cursor.fetchall()
-
-        conn.close()
-        logger.info(f"Retrieved {len(files)} files from the database.")
-        return files
-    except sqlite3.Error as e:
-        logger.error(f"Error accessing database: {e}")
-        return []
 
 def fetch_files_from_raw(query):
     """
@@ -88,16 +59,12 @@ def generate():
             logger.warning("Received an empty query.")
             return jsonify({"error": "Query cannot be empty"}), 400
 
-        # Fetch relevant files from the database based on the query
-        retrieved_docs = fetch_files_from_database(query)
+        # Fetch relevant files from the raw folder based on the query
+        retrieved_docs = fetch_files_from_raw(query)
 
         if not retrieved_docs:
-            # If no relevant documents are found in the database, fallback to raw files
-            retrieved_docs = fetch_files_from_raw(query)
-
-            if not retrieved_docs:
-                logger.warning("No relevant documents found for the query.")
-                return jsonify({"error": "No relevant documents found"}), 404
+            logger.warning("No relevant documents found for the query.")
+            return jsonify({"error": "No relevant documents found"}), 404
 
         # Generate response using the RAG system
         logger.info("Generating response using the RAG system...")
