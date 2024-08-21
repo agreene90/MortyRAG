@@ -23,9 +23,9 @@ WORKDIR /app
 # Copy all files to the container
 COPY . /app
 
-# Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+# Upgrade pip and install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
 # Expose the display port for GUI applications
 ENV DISPLAY=:0
