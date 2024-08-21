@@ -1,10 +1,9 @@
 name: Deploy MortyRAG Docker Image
 
 on:
-  workflow_run:
-    workflows: ["Build and Test MortyRAG Docker Image"]
-    types:
-      - completed
+  push:
+    branches:
+      - main
 
 jobs:
   deploy:
@@ -28,7 +27,3 @@ jobs:
         run: |
           docker build -t ghcr.io/agreene90/mortyrag:latest .
           docker push ghcr.io/agreene90/mortyrag:latest
-
-      - name: Prune Docker System to Free Up Space
-        run: |
-          docker system prune -af --volumes
