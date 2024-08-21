@@ -1,11 +1,15 @@
-name: Build and Push Docker Image on Release
+name: Build MortyRAG Docker Image, Save as Artifact, and Create Shortcut Script
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  build-and-push:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,13 +26,70 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build and Tag Docker Image
+    - name: Build Docker image
       run: |
-        TAG_NAME=${{ github.event.release.tag_name }}
-        docker buildx build --tag ghcr.io/agreene90/mortyrag:latest --tag ghcr.io/agreene90/mortyrag:${TAG_NAME} --push .
+        docker build -t ghcr.io/agreene90/mortyrag:latest .
 
-    - name: Push Docker Image to GitHub Container Registry
+    - name: Push Docker image to GitHub Container Registry
       run: |
-        TAG_NAME=${{ github.event.release.tag_name }}
         docker push ghcr.io/agreene90/mortyrag:latest
-        docker push ghcr.io/agreene90/mortyrag:${TAG_NAME}
+
+    - name: Save Docker image as artifact
+      run: |
+        docker save ghcr.io/agreene90/mortyrag:latest -o mortyrag.tar
+
+    - name: Upload Docker image artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: mortyrag-docker-image
+        path: mortyrag.tar
+        retention-days: 5  # Optionally specify how long to keep the artifacts
+
+    - name: Create Shortcut Script
+      run: |
+        cat << 'EOF' > create_shortcut.sh
+        #!/bin/bash
+        set -e
+
+        # Load Docker image
+        if [ -f "mortyrag.tar" ]; then
+          echo "Loading Docker image..."
+          docker load -i mortyrag.tar
+          echo "Docker image loaded successfully."
+        else
+          echo "Docker image not found!"
+          exit 1
+        fi
+
+        # Ensure Docker is running
+        if ! systemctl is-active --quiet docker; then
+          echo "Docker is not running, starting Docker..."
+          sudo systemctl start docker
+        fi
+
+        # Create Desktop Entry for all users
+        DESKTOP_ENTRY="/usr/share/applications/MortyRAG.desktop"
+        echo "[Desktop Entry]" > "$DESKTOP_ENTRY"
+        echo "Version=1.0" >> "$DESKTOP_ENTRY"
+        echo "Name=MortyRAG" >> "$DESKTOP_ENTRY"
+        echo "Comment=Start MortyRAG Docker Container" >> "$DESKTOP_ENTRY"
+        echo "Exec=docker run -it --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ghcr.io/agreene90/mortyrag:latest" >> "$DESKTOP_ENTRY"
+        echo "Icon=docker" >> "$DESKTOP_ENTRY"
+        echo "Terminal=false" >> "$DESKTOP_ENTRY"
+        echo "Type=Application" >> "$DESKTOP_ENTRY"
+        echo "Categories=Development;" >> "$DESKTOP_ENTRY"
+        echo "StartupNotify=true" >> "$DESKTOP_ENTRY"
+
+        # Create a symlink to the user's desktop
+        ln -s "$DESKTOP_ENTRY" "$HOME/Desktop/MortyRAG.desktop"
+        chmod +x "$HOME/Desktop/MortyRAG.desktop"
+
+        echo "MortyRAG has been successfully installed and a shortcut has been added to your desktop."
+        EOF
+
+    - name: Upload Shortcut Script
+      uses: actions/upload-artifact@v3
+      with:
+        name: create_shortcut_script
+        path: create_shortcut.sh
+        retention-days: 5
