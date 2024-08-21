@@ -23,14 +23,9 @@ WORKDIR /app
 # Copy all files to the container
 COPY . /app
 
-# Install Python dependencies, excluding demjson
-RUN pip install --no-cache-dir torch \
-    tensorflow \
-    flax \
-    transformers \
-    PyPDF2 \
-    simplejson \
-    && pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose the display port for GUI applications
 ENV DISPLAY=:0
