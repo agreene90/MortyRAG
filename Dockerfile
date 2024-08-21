@@ -23,8 +23,10 @@ WORKDIR /app
 # Copy all files to the container
 COPY . /app
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies, handling any issues with demjson
+RUN pip install --no-cache-dir simplejson \
+    && sed -i 's/use_2to3=True,//g' setup.py \
+    && pip install --no-cache-dir -r requirements.txt
 
 # Expose the display port for GUI applications
 ENV DISPLAY=:0
