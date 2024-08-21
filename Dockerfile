@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-# Install necessary system dependencies for Tkinter
+# Install necessary system dependencies for Tkinter, OCR, and handling various file types
 RUN apt-get update && apt-get install -y \
     python3-tk \
     libx11-6 \
@@ -8,6 +8,13 @@ RUN apt-get update && apt-get install -y \
     libxrender1 \
     libxtst6 \
     libxi6 \
+    tesseract-ocr \
+    poppler-utils \
+    libjpeg62-turbo-dev \
+    libpng-dev \
+    libtiff-dev \
+    ghostscript \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
