@@ -1,7 +1,8 @@
+# Use the official Python slim image
 FROM python:3.10-slim
 
 # Install necessary system dependencies for Tkinter, OCR, and handling various file types
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-tk \
     libx11-6 \
     libxext6 \
@@ -15,26 +16,27 @@ RUN apt-get update && apt-get install -y \
     libtiff-dev \
     ghostscript \
     unzip \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
 WORKDIR /app
 
-# Copy all files to the container
+# Copy all application files to the container
 COPY . /app
 
 # Install Python dependencies including transformers, PyTorch, TensorFlow, Flax, and PyPDF2
 RUN pip install --no-cache-dir torch \
-    && pip install --no-cache-dir tensorflow \
-    && pip install --no-cache-dir flax \
-    && pip install --no-cache-dir transformers \
-    && pip install --no-cache-dir PyPDF2 \
-    && pip install --no-cache-dir simplejson \
-    && pip install --no-cache-dir --no-deps demjson \
-    && pip install --no-cache-dir -r requirements.txt || true
+    tensorflow \
+    flax \
+    transformers \
+    PyPDF2 \
+    simplejson \
+    demjson \
+    && pip install --no-cache-dir -r requirements.txt
 
 # Expose the display port for GUI applications
 ENV DISPLAY=:0
 
-# Run the Tkinter application
+# Set the entrypoint to the Tkinter application
 CMD ["python", "main.py"]
