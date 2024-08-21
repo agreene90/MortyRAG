@@ -22,7 +22,7 @@ ___
 ```plaintext
 MortyRAG-main/
 ├── .github/workflows/           # GitHub Actions workflows
-│   └── ci_cd.yml                # CI/CD pipeline configuration
+│   └── cd.yml                # CI/CD pipeline configuration
 ├── custom_t5_rag_local_model_v1.0/
 ├── data/
 │   ├── raw/
