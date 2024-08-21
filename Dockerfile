@@ -23,7 +23,7 @@ WORKDIR /app
 # Copy all files to the container
 COPY . /app
 
-# Install Python dependencies including transformers, PyTorch, TensorFlow, Flax, and PyPDF2
+# Install Python dependencies, excluding demjson
 RUN pip install --no-cache-dir torch \
     tensorflow \
     flax \
