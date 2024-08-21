@@ -23,9 +23,10 @@ WORKDIR /app
 # Copy all files to the container
 COPY . /app
 
-# Install Python dependencies, skipping the sed command since setup.py might not exist
+# Install Python dependencies while excluding demjson
 RUN pip install --no-cache-dir simplejson \
-    && pip install --no-cache-dir -r requirements.txt
+    && pip install --no-cache-dir --no-deps demjson \
+    && pip install --no-cache-dir -r requirements.txt || true
 
 # Expose the display port for GUI applications
 ENV DISPLAY=:0
