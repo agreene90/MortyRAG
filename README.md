@@ -1,8 +1,8 @@
 # MortyRAG
 
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/agreene90/MortyRAG/ci_cd.yml?branch=main&label=Build%20Status)](https://github.com/agreene90/MortyRAG/actions)
-[![Docker Pulls](https://img.shields.io/docker/pulls/agreene90/mortyrag)](https://hub.docker.com/r/agreene90/mortyrag)
-[![Docker Image Size](https://img.shields.io/docker/image-size/agreene90/mortyrag/latest)](https://hub.docker.com/r/agreene90/mortyrag)
+[![Docker Pulls](https://img.shields.io/docker/pulls/agreene90/mortyrag)](ghcr.io/agreene90/mortyrag:e13de34)
+[![Docker Image Size](https://img.shields.io/docker/image-size/agreene90/mortyrag/latest)](ghcr.io/agreene90/mortyrag:e13de34)
 [![GitHub Issues](https://img.shields.io/github/issues/agreene90/MortyRAG)](https://github.com/agreene90/MortyRAG/issues)
 [![GitHub Forks](https://img.shields.io/github/forks/agreene90/MortyRAG)](https://github.com/agreene90/MortyRAG/network/members)
 [![GitHub Stars](https://img.shields.io/github/stars/agreene90/MortyRAG)](https://github.com/agreene90/MortyRAG/stargazers)
