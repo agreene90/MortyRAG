@@ -25,5 +25,11 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          docker build -t ghcr.io/agreene90/mortyrag:latest .
+          docker build -t ghcr.io/agreene90/mortyrag:latest \
+            --label "org.opencontainers.image.title=MortyRAG" \
+            --label "org.opencontainers.image.description=A Retrieval-Augmented Generation (RAG) model designed to generate witty, informative, and contextually accurate responses, with a focus on physics." \
+            --label "org.opencontainers.image.authors=agreene90" \
+            --label "org.opencontainers.image.source=https://github.com/agreene90/MortyRAG" \
+            --label "org.opencontainers.image.version=latest" .
+          
           docker push ghcr.io/agreene90/mortyrag:latest
