@@ -13,93 +13,96 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
+      - name: Clean Runner Workspace
+        run: |
+          sudo rm -rf /var/lib/docker/*
 
-    - name: Set Up Python Environment
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-    - name: Install Python Dependencies
-      run: |
-        python -m venv venv
-        source venv/bin/activate
-        pip install --upgrade pip
-        pip install -r requirements.txt
-        deactivate
+      - name: Set Up Python Environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
-    - name: Set Up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+      - name: Install Python Dependencies
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
 
-    - name: Log in to GitHub Container Registry
-      uses: docker/login-action@v2
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set Up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-    - name: Build and Push Docker Image
-      run: |
-        docker build -t ghcr.io/agreene90/mortyrag:latest .
-        docker push ghcr.io/agreene90/mortyrag:latest
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Prune Docker System to Free Up Space
-      run: |
-        docker system prune -af --volumes
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t ghcr.io/agreene90/mortyrag:latest .
+          docker push ghcr.io/agreene90/mortyrag:latest
 
-    - name: Run Docker Container for Testing
-      run: |
-        docker run -d --name mortyrag-test -p 8080:8080 ghcr.io/agreene90/mortyrag:latest
+      - name: Prune Docker System to Free Up Space
+        run: |
+          docker system prune -af --volumes
 
-    - name: Wait for Container to be Ready
-      run: |
-        sleep 10  # Wait for the app to start
+      - name: Run Docker Container for Testing
+        run: |
+          docker run -d --name mortyrag-test -p 8080:8080 ghcr.io/agreene90/mortyrag:latest
 
-    - name: Test Application
-      run: |
-        curl -f http://localhost:8080 || (echo "Application did not start correctly" && docker logs mortyrag-test && exit 1)
+      - name: Wait for Container to be Ready
+        run: |
+          sleep 10  # Wait for the app to start
 
-    - name: Stop and Remove Docker Container
-      run: |
-        docker stop mortyrag-test
-        docker rm mortyrag-test
+      - name: Test Application
+        run: |
+          curl -f http://localhost:8080 || (echo "Application did not start correctly" && docker logs mortyrag-test && exit 1)
 
-    - name: Create and Upload Shortcut Script
-      run: |
-        cat << 'EOF' > create_shortcut.sh
-        #!/bin/bash
-        set -e
+      - name: Stop and Remove Docker Container
+        run: |
+          docker stop mortyrag-test
+          docker rm mortyrag-test
 
-        # Ensure Docker is running
-        if ! systemctl is-active --quiet docker; then
-          echo "Docker is not running, starting Docker..."
-          sudo systemctl start docker
-        fi
+      - name: Create and Upload Shortcut Script
+        run: |
+          cat << 'EOF' > create_shortcut.sh
+          #!/bin/bash
+          set -e
 
-        # Create Desktop Entry for all users
-        DESKTOP_ENTRY="/usr/share/applications/MortyRAG.desktop"
-        echo "[Desktop Entry]" > "$DESKTOP_ENTRY"
-        echo "Version=1.0" >> "$DESKTOP_ENTRY"
-        echo "Name=MortyRAG" >> "$DESKTOP_ENTRY"
-        echo "Comment=Start MortyRAG Docker Container" >> "$DESKTOP_ENTRY"
-        echo "Exec=docker run -it --rm -e DISPLAY=\$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ghcr.io/agreene90/mortyrag:latest" >> "$DESKTOP_ENTRY"
-        echo "Icon=docker" >> "$DESKTOP_ENTRY"
-        echo "Terminal=false" >> "$DESKTOP_ENTRY"
-        echo "Type=Application" >> "$DESKTOP_ENTRY"
-        echo "Categories=Development;" >> "$DESKTOP_ENTRY"
-        echo "StartupNotify=true" >> "$DESKTOP_ENTRY"
+          # Ensure Docker is running
+          if ! systemctl is-active --quiet docker; then
+            echo "Docker is not running, starting Docker..."
+            sudo systemctl start docker
+          fi
 
-        # Create a symlink to the user's desktop
-        ln -s "$DESKTOP_ENTRY" "$HOME/Desktop/MortyRAG.desktop"
-        chmod +x "$HOME/Desktop/MortyRAG.desktop"
+          # Create Desktop Entry for all users
+          DESKTOP_ENTRY="/usr/share/applications/MortyRAG.desktop"
+          echo "[Desktop Entry]" > "$DESKTOP_ENTRY"
+          echo "Version=1.0" >> "$DESKTOP_ENTRY"
+          echo "Name=MortyRAG" >> "$DESKTOP_ENTRY"
+          echo "Comment=Start MortyRAG Docker Container" >> "$DESKTOP_ENTRY"
+          echo "Exec=docker run -it --rm -e DISPLAY=\$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ghcr.io/agreene90/mortyrag:latest" >> "$DESKTOP_ENTRY"
+          echo "Icon=docker" >> "$DESKTOP_ENTRY"
+          echo "Terminal=false" >> "$DESKTOP_ENTRY"
+          echo "Type=Application" >> "$DESKTOP_ENTRY"
+          echo "Categories=Development;" >> "$DESKTOP_ENTRY"
+          echo "StartupNotify=true" >> "$DESKTOP_ENTRY"
 
-        echo "MortyRAG has been successfully installed and a shortcut has been added to your desktop."
-        EOF
+          # Create a symlink to the user's desktop
+          ln -s "$DESKTOP_ENTRY" "$HOME/Desktop/MortyRAG.desktop"
+          chmod +x "$HOME/Desktop/MortyRAG.desktop"
 
-    - name: Upload Shortcut Script Artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: create_shortcut_script
-        path: create_shortcut.sh
-        retention-days: 5
+          echo "MortyRAG has been successfully installed and a shortcut has been added to your desktop."
+          EOF
+
+      - name: Upload Shortcut Script Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: create_shortcut_script
+          path: create_shortcut.sh
+          retention-days: 5
