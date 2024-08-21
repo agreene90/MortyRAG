@@ -23,9 +23,13 @@ WORKDIR /app
 # Copy all files to the container
 COPY . /app
 
-# Install Python dependencies including transformers
-RUN pip install --no-cache-dir simplejson \
+# Install Python dependencies including transformers, PyTorch, TensorFlow, Flax, and PyPDF2
+RUN pip install --no-cache-dir torch \
+    && pip install --no-cache-dir tensorflow \
+    && pip install --no-cache-dir flax \
     && pip install --no-cache-dir transformers \
+    && pip install --no-cache-dir PyPDF2 \
+    && pip install --no-cache-dir simplejson \
     && pip install --no-cache-dir --no-deps demjson \
     && pip install --no-cache-dir -r requirements.txt || true
 
