@@ -1,4 +1,4 @@
-name: Build MortyRAG Docker Image, Save as Artifact, and Create Shortcut Script
+name: Build and Deploy MortyRAG Docker Image
 
 on:
   push:
@@ -9,14 +9,14 @@ on:
       - main
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+    - name: Checkout Code
       uses: actions/checkout@v3
 
-    - name: Set up Docker Buildx
+    - name: Set Up Docker Buildx
       uses: docker/setup-buildx-action@v2
 
     - name: Log in to GitHub Container Registry
@@ -26,26 +26,23 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build Docker image
+    - name: Build and Push Docker Image
       run: |
         docker build -t ghcr.io/agreene90/mortyrag:latest .
-
-    - name: Push Docker image to GitHub Container Registry
-      run: |
         docker push ghcr.io/agreene90/mortyrag:latest
 
-    - name: Save Docker image as artifact
+    - name: Save Docker Image as Artifact
       run: |
         docker save ghcr.io/agreene90/mortyrag:latest -o mortyrag.tar
 
-    - name: Upload Docker image artifact
+    - name: Upload Docker Image Artifact
       uses: actions/upload-artifact@v3
       with:
         name: mortyrag-docker-image
         path: mortyrag.tar
-        retention-days: 5  # Optionally specify how long to keep the artifacts
+        retention-days: 5
 
-    - name: Create Shortcut Script
+    - name: Create and Upload Shortcut Script
       run: |
         cat << 'EOF' > create_shortcut.sh
         #!/bin/bash
@@ -73,7 +70,7 @@ jobs:
         echo "Version=1.0" >> "$DESKTOP_ENTRY"
         echo "Name=MortyRAG" >> "$DESKTOP_ENTRY"
         echo "Comment=Start MortyRAG Docker Container" >> "$DESKTOP_ENTRY"
-        echo "Exec=docker run -it --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ghcr.io/agreene90/mortyrag:latest" >> "$DESKTOP_ENTRY"
+        echo "Exec=docker run -it --rm -e DISPLAY=\$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ghcr.io/agreene90/mortyrag:latest" >> "$DESKTOP_ENTRY"
         echo "Icon=docker" >> "$DESKTOP_ENTRY"
         echo "Terminal=false" >> "$DESKTOP_ENTRY"
         echo "Type=Application" >> "$DESKTOP_ENTRY"
@@ -87,7 +84,7 @@ jobs:
         echo "MortyRAG has been successfully installed and a shortcut has been added to your desktop."
         EOF
 
-    - name: Upload Shortcut Script
+    - name: Upload Shortcut Script Artifact
       uses: actions/upload-artifact@v3
       with:
         name: create_shortcut_script
