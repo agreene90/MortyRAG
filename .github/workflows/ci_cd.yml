@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  build-and-test:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,7 +20,7 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
-    
+
     - name: Install Python Dependencies
       run: |
         python -m venv venv
@@ -65,32 +65,11 @@ jobs:
         docker stop mortyrag-test
         docker rm mortyrag-test
 
-    - name: Save Docker Image as Compressed Artifact
-      run: |
-        docker save ghcr.io/agreene90/mortyrag:latest | gzip > mortyrag.tar.gz
-
-    - name: Upload Compressed Docker Image Artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: mortyrag-docker-image
-        path: mortyrag.tar.gz
-        retention-days: 5
-
     - name: Create and Upload Shortcut Script
       run: |
         cat << 'EOF' > create_shortcut.sh
         #!/bin/bash
         set -e
-
-        # Load Docker image
-        if [ -f "mortyrag.tar.gz" ]; then
-          echo "Loading Docker image..."
-          gunzip -c mortyrag.tar.gz | docker load
-          echo "Docker image loaded successfully."
-        else
-          echo "Docker image not found!"
-          exit 1
-        fi
 
         # Ensure Docker is running
         if ! systemctl is-active --quiet docker; then
