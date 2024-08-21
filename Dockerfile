@@ -23,8 +23,9 @@ WORKDIR /app
 # Copy all files to the container
 COPY . /app
 
-# Install Python dependencies while excluding demjson
+# Install Python dependencies including transformers
 RUN pip install --no-cache-dir simplejson \
+    && pip install --no-cache-dir transformers \
     && pip install --no-cache-dir --no-deps demjson \
     && pip install --no-cache-dir -r requirements.txt || true
 
