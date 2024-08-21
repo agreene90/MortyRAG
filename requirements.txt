@@ -3,3 +3,8 @@ transformers
 torch
 Pillow
 pyinstaller
+sentencepiece
+pytesseract
+PyPDF2
+python-docx
+python-csv
