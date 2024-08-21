@@ -8,3 +8,5 @@ pytesseract
 PyPDF2
 python-docx
 python-csv
+tensorflow
+flax
