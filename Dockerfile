@@ -24,9 +24,10 @@ WORKDIR /app
 # Copy all application files to the container
 COPY . .
 
-# Upgrade pip and install Python dependencies
+# Upgrade pip and install Python dependencies including bs4
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+    && pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir beautifulsoup4
 
 # Set environment variable to suppress Python bytecode (.pyc) generation
 ENV PYTHONDONTWRITEBYTECODE=1
