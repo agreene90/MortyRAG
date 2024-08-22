@@ -9,10 +9,7 @@ logger = logging.getLogger(__name__)
 
 class T5RAGWithLocalFiles(torch.nn.Module):
     """
-    T5RAGWithLocalFiles integrates the T5 model with local file data for enhanced text generation.
-
-    This class extends T5ForConditionalGeneration to incorporate content from local files into the text generation
-    process, allowing for more contextually rich and informed responses.
+    Integrates the T5 model with local file data for enhanced text generation.
     """
 
     def __init__(self, generator: T5ForConditionalGeneration, tokenizer: T5Tokenizer):
@@ -30,20 +27,12 @@ class T5RAGWithLocalFiles(torch.nn.Module):
     def forward(self, input_ids: torch.Tensor, attention_mask: Optional[torch.Tensor] = None, labels: Optional[torch.Tensor] = None) -> Tuple[Optional[torch.Tensor], torch.Tensor]:
         """
         Forward pass through the T5 model.
-
-        Args:
-            input_ids (torch.Tensor): The input token IDs.
-            attention_mask (torch.Tensor, optional): The attention mask for the input. Defaults to None.
-            labels (torch.Tensor, optional): The labels for computing the loss. Defaults to None.
-
-        Returns:
-            Tuple[Optional[torch.Tensor], torch.Tensor]: The loss (if labels are provided) and logits from the model.
         """
         try:
             outputs = self.generator(input_ids, attention_mask=attention_mask, labels=labels)
             return outputs.loss, outputs.logits
         except Exception as e:
-            logger.critical(f"Failed to forward pass through the model: {e}")
+            logger.critical(f"Forward pass failed: {e}")
             raise
 
     def generate(
@@ -61,34 +50,14 @@ class T5RAGWithLocalFiles(torch.nn.Module):
     ) -> torch.Tensor:
         """
         Generates text using the T5 model, optionally integrating content from a local file.
-
-        Args:
-            input_ids (torch.Tensor): The input token IDs.
-            attention_mask (torch.Tensor): The attention mask for the input.
-            file_path (Path, optional): Path to a local file whose content will be integrated into the input. Defaults to None.
-            max_length (int): Maximum length of the generated sequences. Defaults to 200.
-            num_return_sequences (int): Number of sequences to return. Defaults to 1.
-            temperature (float): Sampling temperature for diversity. Defaults to 1.0.
-            top_p (float): Nucleus sampling parameter for diversity. Defaults to 0.9.
-            do_sample (bool): Whether to use sampling for text generation. Defaults to False.
-            repetition_penalty (float): Penalty for repeating phrases during text generation. Defaults to 1.0.
-            length_penalty (float): Penalty applied to the length of generated sequences. Defaults to 1.0.
-
-        Returns:
-            torch.Tensor: The generated sequences from the T5 model.
         """
         try:
-            # Optionally read and integrate content from a local file
             file_content = read_local_file(file_path) if file_path else ""
-
             if file_content:
-                # Tokenize the file content
                 file_content_tokens = self.tokenizer(file_content, return_tensors="pt", truncation=True, padding=True)
-                # Concatenate retrieved file content with the input query
                 input_ids = torch.cat((input_ids, file_content_tokens['input_ids']), dim=-1)
                 attention_mask = torch.cat((attention_mask, file_content_tokens['attention_mask']), dim=-1)
 
-            # Generate output sequences using the T5 model
             output_sequences = self.generator.generate(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
@@ -105,5 +74,5 @@ class T5RAGWithLocalFiles(torch.nn.Module):
             return output_sequences
 
         except Exception as e:
-            logger.critical(f"Failed during text generation: {e}")
+            logger.critical(f"Generation failed: {e}")
             raise
