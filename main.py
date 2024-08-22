@@ -9,6 +9,11 @@ from transformers import T5ForConditionalGeneration, T5Tokenizer
 from retriever import read_local_file
 from generator import T5RAGWithLocalFiles
 from rag import generate_answer
+from database import initialize_db, load_files_to_db, save_query, get_query_history
+
+# Initialize database and load files into it
+initialize_db()
+load_files_to_db()
 
 # Configure logging
 logging.basicConfig(filename='app.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -236,6 +241,10 @@ class OptimizationApp:
         self.status_label.grid(column=0, row=12, sticky=(tk.W, tk.E), pady=10)
         ToolTip(self.status_label, "Shows the current status of the process.")
 
+        self.history_button = ttk.Button(container, text="View History", command=self.view_history)
+        self.history_button.grid(column=0, row=13, pady=5)
+        ToolTip(self.history_button, "View the history of queries and results.")
+
     def toggle_mode(self):
         """Toggle between Optimization Mode and Query Mode."""
         mode = self.mode_var.get()
@@ -281,6 +290,10 @@ class OptimizationApp:
             inputs = self.tokenizer(query + file_content, return_tensors="pt", truncation=True, padding=True)
             result_tensor = t5_rag_local_model.generate(input_ids=inputs['input_ids'], attention_mask=inputs['attention_mask'])
             result = self.tokenizer.decode(result_tensor[0], skip_special_tokens=True)
+            
+            # Save the query and generated text to the SQLite database
+            save_query(query, file_path if file_path else None, result)
+
             self.query_history.append((query, result))
             self.solution_label.config(text=f"Result: {result[:50]}...")
             self.status_label.config(text="Status: Complete")
@@ -314,6 +327,15 @@ class OptimizationApp:
             messagebox.showerror("Optimization Error", "An error occurred during the optimization process.")
         self.start_button.config(state=tk.NORMAL)
         self.stop_button.config(state=tk.DISABLED)
+
+    def view_history(self):
+        """View query history stored in the SQLite database."""
+        history = get_query_history()
+        if history:
+            history_str = "\n".join([f"{record[3]}: {record[1]} - {record[2]}" for record in history])
+            messagebox.showinfo("Query History", history_str)
+        else:
+            messagebox.showinfo("Query History", "No history found.")
 
 if __name__ == "__main__":
     root = tk.Tk()
