@@ -1,7 +1,7 @@
 # Use the official Python 3.10 slim image as the base image
 FROM python:3.10-slim
 
-# Install necessary system dependencies for Tkinter, OCR, and handling various file types
+# Install necessary system dependencies for Tkinter, OCR, handling various file types, and X11
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-tk \
     libx11-6 \
@@ -17,7 +17,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ghostscript \
     unzip \
     sqlite3 \
-    xvfb && rm -rf /var/lib/apt/lists/*  # Remove apt lists after installation
+    xvfb \
+    xauth && rm -rf /var/lib/apt/lists/*  # Install xauth and remove apt lists after installation
 
 # Set the working directory
 WORKDIR /app
