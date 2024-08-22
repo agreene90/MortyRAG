@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libtiff-dev \
     ghostscript \
     unzip \
+    sqlite3 \  # Ensure sqlite3 command-line tool is installed
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
@@ -37,10 +38,19 @@ ENV PYTHONUNBUFFERED=1
 # Expose the display port for GUI applications
 ENV DISPLAY=:0
 
+# Create a directory for the SQLite database
+RUN mkdir -p /app/database
+
 # Set up a non-root user for security purposes
 RUN useradd -m myuser \
     && chown -R myuser:myuser /app
 USER myuser
+
+# Define a volume to persist the database file outside of the container
+VOLUME ["/app/database"]
+
+# Set the SQLite database path in an environment variable
+ENV SQLITE_DB_PATH=/app/database/mortrag.db
 
 # Run the Tkinter application
 CMD ["python", "main.py"]
