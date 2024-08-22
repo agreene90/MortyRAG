@@ -5,10 +5,10 @@ import time
 import logging
 from random import random
 from pathlib import Path
-from transformers import T5ForConditionalGeneration, T5Tokenizer  # Correct import
-from retriever import read_local_file  # Importing file handling
-from generator import T5RAGWithLocalFiles  # Importing the T5 RAG model
-from rag import generate_answer  # Importing the RAG functionality
+from transformers import T5ForConditionalGeneration, T5Tokenizer
+from retriever import read_local_file
+from generator import T5RAGWithLocalFiles
+from rag import generate_answer
 
 # Configure logging
 logging.basicConfig(filename='app.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -110,10 +110,7 @@ class Optimizer:
                 if not self.running:
                     break
 
-                # Read content from the local file if provided
                 file_content = read_local_file(Path(file_path)) if file_path else ""
-
-                # Generate and evaluate a solution using the RAG model with local file content
                 inputs = self.tokenizer(query + file_content, return_tensors="pt", truncation=True, padding=True)
                 solution_tensor = t5_rag_local_model.generate(input_ids=inputs['input_ids'], attention_mask=inputs['attention_mask'])
                 solution = self.tokenizer.decode(solution_tensor[0], skip_special_tokens=True)
@@ -127,7 +124,7 @@ class Optimizer:
                     logger.info(f"New best solution found: {self.best_solution[:30]}... with score: {self.best_score}")
                     update_callback(self.best_solution, self.best_score, iteration)
 
-                time.sleep(0.1)  # Simulate time delay in processing
+                time.sleep(0.1)
 
             logger.info("Optimization process completed.")
             on_complete_callback(success=True)
@@ -145,9 +142,8 @@ class OptimizationApp:
     def __init__(self, root):
         self.root = root
         self.root.title("MortyRAG")
-        self.root.configure(bg="#1c1c1c")  # Set a dark background
+        self.root.configure(bg="#1c1c1c")
 
-        # Initialize the T5 model and tokenizer
         self.tokenizer = T5Tokenizer.from_pretrained("t5-base")
         self.generator = T5ForConditionalGeneration.from_pretrained("t5-base")
         self.optimizer = Optimizer(self.generator, self.tokenizer)
@@ -159,13 +155,11 @@ class OptimizationApp:
     def _setup_styles(self):
         """Setup the styling for the application."""
         style = ttk.Style()
-        style.theme_use('clam')  # Use the 'clam' theme for better styling control
+        style.theme_use('clam')
         style.configure('TLabel', font=('Helvetica', 12), background='#1c1c1c', foreground='#9c27b0')
         style.configure('TButton', font=('Helvetica', 12), background='#9c27b0', foreground='#1c1c1c')
         style.configure('TFrame', background='#1c1c1c')
         style.configure('TProgressbar', thickness=20, troughcolor='#333333', background='#9c27b0')
-
-        # Define a style for the LabelFrame
         style.configure('TLabelframe', background='#1c1c1c', foreground='#9c27b0', relief='solid', borderwidth=1)
         style.configure('TLabelframe.Label', background='#1c1c1c', foreground='#9c27b0')
 
@@ -178,13 +172,11 @@ class OptimizationApp:
         container.grid(column=0, row=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
         container.columnconfigure(0, weight=1)
-        container.rowconfigure([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], weight=1)
+        container.rowconfigure(list(range(13)), weight=1)
 
-        # Title Label
         title_label = ttk.Label(container, text="MortyRAG", font=('Helvetica', 24, 'bold'), style="TLabel", anchor='center')
         title_label.grid(column=0, row=0, sticky=(tk.W, tk.E), pady=(0, 20))
 
-        # Mode Selection
         self.mode_var = tk.StringVar(value="Optimization")
         self.optimization_radio = ttk.Radiobutton(
             container, text="Optimization Mode", variable=self.mode_var, value="Optimization", command=self.toggle_mode, style="TRadiobutton"
@@ -198,18 +190,15 @@ class OptimizationApp:
         self.query_radio.grid(column=0, row=2, sticky=tk.W, pady=5)
         ToolTip(self.query_radio, "Run the system in query mode for single queries.")
 
-        # Query Entry
         self.query_entry = PlaceholderEntry(container, placeholder="Enter your query here...", font=("Helvetica", 12))
         self.query_entry.grid(column=0, row=3, sticky=(tk.W, tk.E), pady=5)
         ToolTip(self.query_entry, "Type your query here before starting the process.")
 
-        # File Selection
         self.file_path_var = tk.StringVar()
         self.file_entry = PlaceholderEntry(container, textvariable=self.file_path_var, placeholder="Enter file path (optional)...", font=("Helvetica", 12))
         self.file_entry.grid(column=0, row=4, sticky=(tk.W, tk.E), pady=5)
         ToolTip(self.file_entry, "Optional: Provide a path to a file for additional context.")
 
-        # Parameter Configuration (Example: max_length)
         self.param_frame = ttk.LabelFrame(container, text="Model Parameters", padding="10", style="TLabelframe")
         self.param_frame.grid(column=0, row=5, sticky=(tk.W, tk.E), pady=10)
         
@@ -219,7 +208,6 @@ class OptimizationApp:
         self.max_length_entry.grid(column=1, row=0, sticky=(tk.W, tk.E), pady=5)
         ToolTip(self.max_length_entry, "Set the maximum length of the generated text.")
 
-        # Start and Stop Buttons
         self.start_button = ttk.Button(container, text="Start", command=self.start_process)
         self.start_button.grid(column=0, row=6, pady=5)
         ToolTip(self.start_button, "Start the optimization or query process based on the selected mode.")
@@ -228,7 +216,6 @@ class OptimizationApp:
         self.stop_button.grid(column=0, row=7, pady=5)
         ToolTip(self.stop_button, "Stop the ongoing optimization process.")
 
-        # Solution and Score Display
         self.solution_label = ttk.Label(container, text="Best Solution: N/A", style="TLabel")
         self.solution_label.grid(column=0, row=8, sticky=(tk.W, tk.E), pady=5)
         ToolTip(self.solution_label, "Displays the best solution found during optimization or the query result.")
