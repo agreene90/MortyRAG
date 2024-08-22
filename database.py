@@ -2,6 +2,11 @@ import os
 import sqlite3
 from pathlib import Path
 from retriever import read_local_file
+from sklearn.feature_extraction.text import TfidfVectorizer
+import spacy
+
+# Load the spacy model for advanced NLP processing (download first with `python -m spacy download en_core_web_sm`)
+nlp = spacy.load("en_core_web_sm")
 
 # Get the database path from the environment variable
 DB_PATH = os.getenv("SQLITE_DB_PATH", "./mortrag.db")
@@ -32,6 +37,7 @@ def initialize_db():
                 id INTEGER PRIMARY KEY,
                 filename TEXT NOT NULL UNIQUE,
                 content TEXT,
+                vector BLOB,
                 last_updated DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -71,14 +77,23 @@ def get_model_versions():
         cursor.execute("SELECT * FROM models ORDER BY saved_at DESC")
         return cursor.fetchall()
 
+def tokenize_and_vectorize(text):
+    """Tokenize and create a vector representation of the text using TF-IDF."""
+    doc = nlp(text)
+    tokens = [token.lemma_ for token in doc if not token.is_stop and not token.is_punct]
+    vectorizer = TfidfVectorizer()
+    vector = vectorizer.fit_transform([" ".join(tokens)]).toarray()[0]
+    return vector
+
 def load_files_to_db():
     """Load all supported files from /data/raw/ into the database."""
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
 
         # Process each supported file type in the /data/raw/ directory
-        for file_path in RAW_DATA_DIR.glob('*.*'):
+        for file_path in RAW_DATA_DIR.glob('*.txt'):
             content = read_local_file(file_path)
+            vector = tokenize_and_vectorize(content)
             
             # Check if the document is already in the database
             cursor.execute("""
@@ -90,15 +105,15 @@ def load_files_to_db():
                 # Update the content if it already exists
                 cursor.execute("""
                     UPDATE documents
-                    SET content = ?, last_updated = CURRENT_TIMESTAMP
+                    SET content = ?, vector = ?, last_updated = CURRENT_TIMESTAMP
                     WHERE filename = ?
-                """, (content, file_path.name))
+                """, (content, vector, file_path.name))
             else:
                 # Insert new content
                 cursor.execute("""
-                    INSERT INTO documents (filename, content)
-                    VALUES (?, ?)
-                """, (file_path.name, content))
+                    INSERT INTO documents (filename, content, vector)
+                    VALUES (?, ?, ?)
+                """, (file_path.name, content, vector))
         
         conn.commit()
 
@@ -108,6 +123,16 @@ def get_document_content(filename: str):
         cursor = conn.cursor()
         cursor.execute("""
             SELECT content FROM documents WHERE filename = ?
+        """, (filename,))
+        result = cursor.fetchone()
+        return result[0] if result else None
+
+def get_document_vector(filename: str):
+    """Retrieve vector of a specific document from the database."""
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT vector FROM documents WHERE filename = ?
         """, (filename,))
         result = cursor.fetchone()
         return result[0] if result else None
