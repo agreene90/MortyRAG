@@ -1,15 +1,13 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 import threading
-import time
 import logging
-from random import random
 from pathlib import Path
 from transformers import T5ForConditionalGeneration, T5Tokenizer
-from retriever import read_local_file
 from generator import T5RAGWithLocalFiles
-from rag import generate_answer
+from retriever import read_local_file
 from database import initialize_db, load_files_to_db, save_query, get_query_history
+from rag import generate_answer
 
 # Initialize database and load files into it
 initialize_db()
@@ -177,7 +175,7 @@ class OptimizationApp:
         container.grid(column=0, row=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
         container.columnconfigure(0, weight=1)
-        container.rowconfigure(list(range(13)), weight=1)
+        container.rowconfigure(list(range(14)), weight=1)
 
         title_label = ttk.Label(container, text="MortyRAG", font=('Helvetica', 24, 'bold'), style="TLabel", anchor='center')
         title_label.grid(column=0, row=0, sticky=(tk.W, tk.E), pady=(0, 20))
@@ -213,36 +211,49 @@ class OptimizationApp:
         self.max_length_entry.grid(column=1, row=0, sticky=(tk.W, tk.E), pady=5)
         ToolTip(self.max_length_entry, "Set the maximum length of the generated text.")
 
+        self.context_source_var = tk.StringVar(value="file")
+        self.context_source_file_radio = ttk.Radiobutton(
+            container, text="Context from Files", variable=self.context_source_var, value="file", style="TRadiobutton"
+        )
+        self.context_source_file_radio.grid(column=0, row=6, sticky=tk.W, pady=5)
+        ToolTip(self.context_source_file_radio, "Use context from local files.")
+
+        self.context_source_db_radio = ttk.Radiobutton(
+            container, text="Context from Database", variable=self.context_source_var, value="database", style="TRadiobutton"
+        )
+        self.context_source_db_radio.grid(column=0, row=7, sticky=tk.W, pady=5)
+        ToolTip(self.context_source_db_radio, "Use context from the database.")
+
         self.start_button = ttk.Button(container, text="Start", command=self.start_process)
-        self.start_button.grid(column=0, row=6, pady=5)
+        self.start_button.grid(column=0, row=8, pady=5)
         ToolTip(self.start_button, "Start the optimization or query process based on the selected mode.")
 
         self.stop_button = ttk.Button(container, text="Stop", command=self.stop_process, state=tk.DISABLED)
-        self.stop_button.grid(column=0, row=7, pady=5)
+        self.stop_button.grid(column=0, row=9, pady=5)
         ToolTip(self.stop_button, "Stop the ongoing optimization process.")
 
         self.solution_label = ttk.Label(container, text="Best Solution: N/A", style="TLabel")
-        self.solution_label.grid(column=0, row=8, sticky=(tk.W, tk.E), pady=5)
+        self.solution_label.grid(column=0, row=10, sticky=(tk.W, tk.E), pady=5)
         ToolTip(self.solution_label, "Displays the best solution found during optimization or the query result.")
 
         self.score_label = ttk.Label(container, text="Best Score: N/A", style="TLabel")
-        self.score_label.grid(column=0, row=9, sticky=(tk.W, tk.E), pady=5)
+        self.score_label.grid(column=0, row=11, sticky=(tk.W, tk.E), pady=5)
         ToolTip(self.score_label, "Displays the score of the best solution.")
 
         self.progress_label = ttk.Label(container, text="Progress: 0%", style="TLabel")
-        self.progress_label.grid(column=0, row=10, sticky=(tk.W, tk.E), pady=5)
+        self.progress_label.grid(column=0, row=12, sticky=(tk.W, tk.E), pady=5)
         ToolTip(self.progress_label, "Shows the progress of the optimization process.")
 
         self.progress_bar = ttk.Progressbar(container, orient="horizontal", mode="determinate", style="TProgressbar")
-        self.progress_bar.grid(column=0, row=11, sticky=(tk.W, tk.E), pady=5)
+        self.progress_bar.grid(column=0, row=13, sticky=(tk.W, tk.E), pady=5)
         ToolTip(self.progress_bar, "Displays the progress bar during optimization.")
 
         self.status_label = ttk.Label(container, text="Status: Idle", style="TLabel")
-        self.status_label.grid(column=0, row=12, sticky=(tk.W, tk.E), pady=10)
+        self.status_label.grid(column=0, row=14, sticky=(tk.W, tk.E), pady=10)
         ToolTip(self.status_label, "Shows the current status of the process.")
 
         self.history_button = ttk.Button(container, text="View History", command=self.view_history)
-        self.history_button.grid(column=0, row=13, pady=5)
+        self.history_button.grid(column=0, row=15, pady=5)
         ToolTip(self.history_button, "View the history of queries and results.")
 
     def toggle_mode(self):
@@ -257,6 +268,8 @@ class OptimizationApp:
         """Handle the start of either the optimization or query process based on the selected mode."""
         query = self.query_entry.get().strip()
         file_path = self.file_path_var.get().strip()
+        context_source = self.context_source_var.get()
+
         if not query or query == "Enter your query here...":
             messagebox.showerror("Input Error", "Please enter a valid query before starting.")
             return
@@ -265,11 +278,11 @@ class OptimizationApp:
         max_length = self.max_length_var.get()
 
         if mode == "Optimization":
-            self.start_optimization(query, file_path, max_length)
+            self.start_optimization(query, file_path, max_length, context_source)
         elif mode == "Query":
-            self.start_query(query, file_path, max_length)
+            self.start_query(query, file_path, max_length, context_source)
 
-    def start_optimization(self, query, file_path, max_length):
+    def start_optimization(self, query, file_path, max_length, context_source):
         """Start the optimization process."""
         self.start_button.config(state=tk.DISABLED)
         self.stop_button.config(state=tk.NORMAL)
@@ -280,22 +293,12 @@ class OptimizationApp:
             query, file_path, self.update_solution, self.on_optimization_complete, max_iterations=100
         )
 
-    def start_query(self, query, file_path, max_length):
+    def start_query(self, query, file_path, max_length, context_source):
         """Handle a single query process."""
         try:
             self.status_label.config(text="Status: Processing Query...")
             self.start_button.config(state=tk.DISABLED)
-            t5_rag_local_model = T5RAGWithLocalFiles(self.generator, self.tokenizer)
-            file_content = read_local_file(Path(file_path)) if file_path else ""
-            inputs = self.tokenizer(query + file_content, return_tensors="pt", truncation=True, padding=True)
-            result_tensor = t5_rag_local_model.generate(input_ids=inputs['input_ids'], attention_mask=inputs['attention_mask'])
-            result = self.tokenizer.decode(result_tensor[0], skip_special_tokens=True)
-            
-            # Save the query and generated text to the SQLite database
-            save_query(query, file_path if file_path else None, result)
-
-            self.query_history.append((query, result))
-            self.solution_label.config(text=f"Result: {result[:50]}...")
+            generate_answer(query=query, file_path=Path(file_path) if file_path else None, max_length=max_length, context_source=context_source)
             self.status_label.config(text="Status: Complete")
             self.start_button.config(state=tk.NORMAL)
         except Exception as e:
