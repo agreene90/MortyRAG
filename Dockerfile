@@ -24,10 +24,11 @@ WORKDIR /app
 # Copy all application files to the container
 COPY . .
 
-# Upgrade pip and install Python dependencies including bs4, lxml, and scikit-learn
+# Upgrade pip and install Python dependencies including bs4, lxml, scikit-learn, and spaCy
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir beautifulsoup4 lxml scikit-learn
+    && pip install --no-cache-dir beautifulsoup4 lxml scikit-learn spacy \
+    && python -m spacy download en_core_web_sm  # Download the spaCy language model
 
 # Set environment variable to suppress Python bytecode (.pyc) generation
 ENV PYTHONDONTWRITEBYTECODE=1
