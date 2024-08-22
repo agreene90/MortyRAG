@@ -4,6 +4,7 @@ from transformers import T5Tokenizer, T5ForConditionalGeneration
 from pathlib import Path
 from typing import Optional, Tuple
 from retriever import read_local_file
+from database import get_document_content  # Import the function to retrieve document content
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +41,7 @@ class T5RAGWithLocalFiles(torch.nn.Module):
         input_ids: torch.Tensor,
         attention_mask: torch.Tensor,
         file_path: Optional[Path] = None,
+        filename: Optional[str] = None,  # Add a filename parameter to fetch content from the database
         max_length: int = 200,
         num_return_sequences: int = 1,
         temperature: float = 1.0,
@@ -49,10 +51,19 @@ class T5RAGWithLocalFiles(torch.nn.Module):
         length_penalty: float = 1.0
     ) -> torch.Tensor:
         """
-        Generates text using the T5 model, optionally integrating content from a local file.
+        Generates text using the T5 model, optionally integrating content from a local file or database.
         """
         try:
-            file_content = read_local_file(file_path) if file_path else ""
+            file_content = ""
+
+            # Read from a local file if a file path is provided
+            if file_path:
+                file_content = read_local_file(file_path)
+            
+            # If no file path is provided but a filename is, read from the database
+            elif filename:
+                file_content = get_document_content(filename)
+            
             if file_content:
                 file_content_tokens = self.tokenizer(file_content, return_tensors="pt", truncation=True, padding=True)
                 input_ids = torch.cat((input_ids, file_content_tokens['input_ids']), dim=-1)
