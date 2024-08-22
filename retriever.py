@@ -7,6 +7,8 @@ import json
 import zipfile
 import pytesseract
 from PIL import Image
+from xml.etree import ElementTree as ET
+from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +24,9 @@ FILE_READERS = {
     '.jpeg': 'read_image_file',
     '.tiff': 'read_image_file',
     '.txt': 'read_text_file',
-    '.md': 'read_text_file'
+    '.md': 'read_text_file',
+    '.xml': 'read_xml_file',
+    '.html': 'read_html_file'
 }
 
 def read_local_file(file_path: Path) -> str:
@@ -35,7 +39,7 @@ def read_local_file(file_path: Path) -> str:
     reader_function = globals().get(FILE_READERS.get(suffix))
     
     if reader_function:
-        return reader_function(file_path)
+        return globals()[reader_function](file_path)
     else:
         logger.warning(f"Unsupported file type: {suffix}. Returning empty content.")
         return ""
@@ -45,7 +49,7 @@ def read_pdf_file(file_path: Path) -> str:
     try:
         with open(file_path, 'rb') as file:
             reader = PyPDF2.PdfReader(file)
-            content = "".join(page.extract_text() for page in reader.pages)
+            content = "".join(page.extract_text() for page in reader.pages if page.extract_text())
         logger.info(f"Successfully extracted content from PDF {file_path}")
         return content
     except Exception as e:
@@ -93,7 +97,7 @@ def read_zip_file(file_path: Path) -> str:
         with zipfile.ZipFile(file_path, 'r') as zip_ref:
             for file_name in zip_ref.namelist():
                 with zip_ref.open(file_name) as file:
-                    content.append(f"\nFile: {file_name}\n" + file.read().decode('utf-8'))
+                    content.append(f"\nFile: {file_name}\n" + file.read().decode('utf-8', errors='ignore'))
         logger.info(f"Successfully extracted content from ZIP {file_path}")
         return "".join(content)
     except Exception as e:
@@ -120,6 +124,30 @@ def read_text_file(file_path: Path) -> str:
         return content
     except Exception as e:
         logger.error(f"Failed to read text file {file_path}: {e}")
+        return ""
+
+def read_xml_file(file_path: Path) -> str:
+    """Extract text from an XML file."""
+    try:
+        tree = ET.parse(file_path)
+        root = tree.getroot()
+        content = ET.tostring(root, encoding='unicode', method='text')
+        logger.info(f"Successfully extracted content from XML {file_path}")
+        return content
+    except Exception as e:
+        logger.error(f"Failed to read XML file {file_path}: {e}")
+        return ""
+
+def read_html_file(file_path: Path) -> str:
+    """Extract text from an HTML file using BeautifulSoup."""
+    try:
+        with file_path.open('r', encoding='utf-8') as file:
+            soup = BeautifulSoup(file, 'html.parser')
+            content = soup.get_text()
+        logger.info(f"Successfully extracted content from HTML {file_path}")
+        return content
+    except Exception as e:
+        logger.error(f"Failed to read HTML file {file_path}: {e}")
         return ""
 
 def ensure_dir(directory: Path):
