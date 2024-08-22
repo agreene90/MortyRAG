@@ -61,8 +61,8 @@ def generate_answer(
 
         if context_source == "file":
             base_directory = Path('./data/raw/')
-            for file_path in base_directory.rglob('*.*'):
-                content = file_path.read_text(encoding='utf-8')
+            for file in base_directory.rglob('*.*'):
+                content = file.read_text(encoding='utf-8')
                 if regex_filter:
                     content = ' '.join(re.findall(regex_filter, content))
                 context_documents.append(content)
