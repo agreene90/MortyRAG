@@ -7,6 +7,7 @@ from typing import Optional
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 from generator import T5RAGWithLocalFiles
 from retriever import ensure_dir
+from database import get_document_content, save_query
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -24,10 +25,11 @@ def generate_answer(
     do_sample: bool = False,
     repetition_penalty: float = 1.0,
     length_penalty: float = 1.0,
-    regex_filter: Optional[str] = None  # Optional regex filter parameter
+    regex_filter: Optional[str] = None,  # Optional regex filter parameter
+    context_source: str = "file"  # Can be "file" or "database"
 ) -> None:
     """
-    Generate an answer using T5RAG with local file content and speak only the generated response.
+    Generate an answer using T5RAG with local content from files or database.
     """
     try:
         if not query.strip():
@@ -55,16 +57,32 @@ def generate_answer(
         t5_rag_local_model = T5RAGWithLocalFiles(generator=generator, tokenizer=tokenizer)
         logger.debug("Initialized T5RAGWithLocalFiles model.")
 
-        base_directory = Path('./data/raw/')
         context_documents = []
-        for file_path in base_directory.rglob('*.txt'):
-            content = file_path.read_text(encoding='utf-8')
-            if regex_filter:
-                content = ' '.join(re.findall(regex_filter, content))
-            context_documents.append(content)
-            if len(context_documents) >= 2:  # Limit number of documents for memory efficiency
-                break
-        
+
+        if context_source == "file":
+            base_directory = Path('./data/raw/')
+            for file_path in base_directory.rglob('*.*'):
+                content = file_path.read_text(encoding='utf-8')
+                if regex_filter:
+                    content = ' '.join(re.findall(regex_filter, content))
+                context_documents.append(content)
+                if len(context_documents) >= 2:  # Limit number of documents for memory efficiency
+                    break
+        elif context_source == "database":
+            # Load content from the database
+            document_filenames = ["your_filename_1.txt", "your_filename_2.txt"]  # replace with actual filenames or logic to fetch from DB
+            for filename in document_filenames:
+                content = get_document_content(filename)
+                if content and regex_filter:
+                    content = ' '.join(re.findall(regex_filter, content))
+                if content:
+                    context_documents.append(content)
+                if len(context_documents) >= 2:  # Limit number of documents for memory efficiency
+                    break
+        else:
+            logger.error("Invalid context source specified.")
+            raise ValueError("Invalid context source. Choose either 'file' or 'database'.")
+
         combined_context = ' '.join(context_documents)[:1000]  # Limit to 1000 characters
         
         inputs = tokenizer(query + combined_context, return_tensors="pt")
@@ -86,6 +104,9 @@ def generate_answer(
 
         os.system(f'espeak "{generated_text}"')
 
+        # Save query and result to the database
+        save_query(query=query, file_path=str(file_path) if file_path else None, result=generated_text)
+
         if save_model:
             model_save_path = Path(f"./custom_t5_rag_local_model_{model_version}")
             ensure_dir(model_save_path)
@@ -98,11 +119,12 @@ def generate_answer(
         raise RuntimeError(f"Failed to generate an answer: {e}")
 
 if __name__ == "__main__":
-    if len(sys.argv) not in [2, 3]:
-        logger.error("Usage: python3 rag.py '<the query>' [optional: '<regex_filter>']")
+    if len(sys.argv) < 2 or len(sys.argv) > 4:
+        logger.error("Usage: python3 rag.py '<the query>' [optional: '<regex_filter>'] [context_source: 'file' or 'database']")
         sys.exit(1)
 
     query = sys.argv[1]
-    regex_filter = sys.argv[2] if len(sys.argv) == 3 else None
+    regex_filter = sys.argv[2] if len(sys.argv) >= 3 else None
+    context_source = sys.argv[3] if len(sys.argv) == 4 else "file"
 
-    generate_answer(query, regex_filter=regex_filter)
+    generate_answer(query, regex_filter=regex_filter, context_source=context_source)
