@@ -298,7 +298,8 @@ class OptimizationApp:
         try:
             self.status_label.config(text="Status: Processing Query...")
             self.start_button.config(state=tk.DISABLED)
-            generate_answer(query=query, file_path=Path(file_path) if file_path else None, max_length=max_length, context_source=context_source)
+            generated_text = generate_answer(query=query, file_path=Path(file_path) if file_path else None, max_length=max_length, context_source=context_source)
+            self.show_query_result(generated_text)
             self.status_label.config(text="Status: Complete")
             self.start_button.config(state=tk.NORMAL)
         except Exception as e:
@@ -330,6 +331,20 @@ class OptimizationApp:
             messagebox.showerror("Optimization Error", "An error occurred during the optimization process.")
         self.start_button.config(state=tk.NORMAL)
         self.stop_button.config(state=tk.DISABLED)
+
+    def show_query_result(self, result_text):
+        """Display the result of a query in a pop-up window."""
+        result_window = tk.Toplevel(self.root)
+        result_window.title("Query Result")
+        result_window.geometry("400x300")
+
+        result_label = tk.Label(result_window, text="Query Result:", font=("Helvetica", 14, "bold"))
+        result_label.pack(pady=10)
+
+        result_textbox = tk.Text(result_window, wrap="word", font=("Helvetica", 12))
+        result_textbox.insert("1.0", result_text)
+        result_textbox.config(state=tk.DISABLED)
+        result_textbox.pack(expand=True, fill="both", padx=10, pady=10)
 
     def view_history(self):
         """View query history stored in the SQLite database."""
