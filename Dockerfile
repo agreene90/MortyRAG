@@ -16,7 +16,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libtiff-dev \
     ghostscript \
     unzip \
-    sqlite3 && rm -rf /var/lib/apt/lists/*  # Remove apt lists after installation
+    sqlite3 \
+    xvfb && rm -rf /var/lib/apt/lists/*  # Remove apt lists after installation
 
 # Set the working directory
 WORKDIR /app
@@ -54,4 +55,4 @@ VOLUME ["/app/database"]
 ENV SQLITE_DB_PATH=/app/database/mortrag.db
 
 # Run the Tkinter application
-CMD ["python", "main.py"]
+CMD ["xvfb-run", "--server-args='-screen 0 1024x768x24'", "python", "main.py"]
