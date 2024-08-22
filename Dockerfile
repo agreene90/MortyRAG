@@ -16,8 +16,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libtiff-dev \
     ghostscript \
     unzip \
-    sqlite3 \  # Ensure sqlite3 command-line tool is installed
-    && rm -rf /var/lib/apt/lists/*
+    sqlite3 && \  # Ensure sqlite3 command-line tool is installed
+    rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
 WORKDIR /app
