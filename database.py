@@ -3,10 +3,6 @@ import sqlite3
 from pathlib import Path
 from retriever import read_local_file
 from sklearn.feature_extraction.text import TfidfVectorizer
-import spacy
-
-# Load the spacy model for advanced NLP processing (download first with `python -m spacy download en_core_web_sm`)
-nlp = spacy.load("en_core_web_sm")
 
 # Get the database path from the environment variable
 DB_PATH = os.getenv("SQLITE_DB_PATH", "./mortrag.db")
@@ -79,10 +75,8 @@ def get_model_versions():
 
 def tokenize_and_vectorize(text):
     """Tokenize and create a vector representation of the text using TF-IDF."""
-    doc = nlp(text)
-    tokens = [token.lemma_ for token in doc if not token.is_stop and not token.is_punct]
-    vectorizer = TfidfVectorizer()
-    vector = vectorizer.fit_transform([" ".join(tokens)]).toarray()[0]
+    vectorizer = TfidfVectorizer(stop_words='english')
+    vector = vectorizer.fit_transform([text]).toarray()[0]
     return vector
 
 def load_files_to_db():
