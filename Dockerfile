@@ -17,7 +17,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ghostscript \
     unzip \
     sqlite3 \
-    gdb \
+    xvfb \
+    x11-xserver-utils \
     && rm -rf /var/lib/apt/lists/*  # Remove apt lists after installation
 
 # Set the working directory
@@ -30,7 +31,7 @@ COPY . .
 RUN python3 -m pip install --no-cache-dir --upgrade pip \
     && python3 -m pip install --no-cache-dir -r requirements.txt \
     && python3 -m pip install --no-cache-dir beautifulsoup4 lxml scikit-learn spacy \
-    && python3 -m pip install --no-cache-dir tensorflow-cpu torch-cpu \
+    && python3 -m pip install --no-cache-dir tensorflow-cpu torch \
     && python3 -m spacy download en_core_web_sm  # Download the spaCy language model
 
 # Set environment variable to suppress Python bytecode (.pyc) generation
@@ -56,5 +57,5 @@ VOLUME ["/app/database"]
 # Set the SQLite database path in an environment variable
 ENV SQLITE_DB_PATH=/app/database/mortrag.db
 
-# Run the Tkinter application using python3
-CMD ["python3", "main.py"]
+# Command to start the X virtual framebuffer and run the Tkinter application
+CMD ["xvfb-run", "-a", "python3", "main.py"]
