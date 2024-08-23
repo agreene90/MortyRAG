@@ -1,7 +1,7 @@
 # Use the official Python 3.10 slim image as the base image
 FROM python:3.10-slim
 
-# Install necessary system dependencies for Tkinter, OCR, handling various file types, and X11
+# Install necessary system dependencies for Tkinter, OCR, and handling various file types
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-tk \
     libx11-6 \
@@ -16,9 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libtiff-dev \
     ghostscript \
     unzip \
-    sqlite3 \
-    xvfb \
-    xauth && rm -rf /var/lib/apt/lists/*  # Install xauth and remove apt lists after installation
+    sqlite3 && rm -rf /var/lib/apt/lists/*  # Remove apt lists after installation
 
 # Set the working directory
 WORKDIR /app
@@ -56,4 +54,4 @@ VOLUME ["/app/database"]
 ENV SQLITE_DB_PATH=/app/database/mortrag.db
 
 # Run the Tkinter application
-CMD ["xvfb-run", "--server-args='-screen 0 1024x768x24'", "python", "main.py"]
+CMD ["python", "main.py"]
